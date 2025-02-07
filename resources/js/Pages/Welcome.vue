@@ -30,7 +30,7 @@ function handleImageError() {
 <template>
     <Head title="Welcome" />
     <header>
-        <h3 class="d-flex text-center text-9xl text-[#00ff00] font-[Courier]">Nork AI RPG</h3>
+        <h3 class="d-flex text-center text-6xl text-[#00ff00] font-[Courier]">Battle at Chiclay's</h3>
     </header>
     <main>
         <ChatBox></ChatBox>

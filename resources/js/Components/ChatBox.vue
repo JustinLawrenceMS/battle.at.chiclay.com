@@ -13,7 +13,7 @@ import { ref, onMounted, nextTick } from "vue";
 const messages = ref([]);
 const terminal = ref(null);
 const gamePayload = ref({});
-const delay = 3000;
+const delay = 10000;
 
 const addMessage = (sender, text) => {
   messages.value.push({ sender, text });
@@ -26,7 +26,7 @@ const addMessage = (sender, text) => {
 };
 
 const simulateConversation = async () => {
-  for (let index = 0; index < 4; index++) {
+  for (let index = 0; index < 30; index++) {
     try {
       // Llama AI turn
       const llamaResponse = await axios.get(`/api/v1/llama`, {

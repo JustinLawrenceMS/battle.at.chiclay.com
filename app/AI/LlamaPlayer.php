@@ -23,15 +23,20 @@ class LlamaPlayer
     public function getLlamaResponse(mixed $prompt = null): array
     {
         if ($prompt == null || $prompt == "null") {
-            $prompt = "You are playing D&D 5e. Please created a character in D&D 5e and return your response to the DM. Use HTML for line breaks and text formatting.";
+            $prompt = "You are playing D&D 5e. Please create a character in D&D 5e 
+            and return your response to the DM. Use only HTML for line breaks and 
+            text formatting. Only play your one character.  Do not speak for anyone else.";
         }
 
-        $payload = [
-            "model" => "llama3.2-3b",
-            "messages" => [
-                ["role" => "user", "content" => $prompt]
-            ],
-        ];
+        $payload = array_merge(
+            session("llama") ?? [],
+            [
+                "model" => "llama3.2-3b",
+                "messages" => [
+                    ["role" => "user", "content" => $prompt]
+                ],
+            ]
+        );
 
         $response = $this->client->post('chat/completions', [
             'json' => $payload,
@@ -45,8 +50,8 @@ class LlamaPlayer
         return $contents;
     }
 
-    public function setSession(): void    
+    public function setSession(string $llm): void    
     {
-        $this->setSession();
+        $this->setSession("llama");
     }
 }
