@@ -12,9 +12,8 @@ class GameController extends Controller
 {
     public function llamaPlay(Request $request): JsonResponse
     {
-        \Log::info("Llama Request: " . $request->input("llama_prompt"));
         $llama = new LlamaPlayer();
-        $llamaResponse = $llama->getLlamaResponse(in_array($request->input("llama_prompt"), ["{}", null, "null"]) ? null : $request->input("llama_prompt"));
+        $llamaResponse = $llama->getLlamaResponse(in_array($request->input("llama_prompt['prompt']"), ["{}", null, "No response", "null", '%7D%7B', urldecode('%7D%7B')]) ? null : $request->input("llama_prompt['prompt']"));
 
         return response()->json($llamaResponse);
     }
@@ -22,7 +21,7 @@ class GameController extends Controller
     public function chatgptPlay(Request $request): JsonResponse
     {
         $chatgpt = new ChatGPTPlayer();
-        $chatgptResponse = $chatgpt->send($request->input("chatgpt_prompt") == "{}" ? null : $request->input("chatgpt_prompt"));
+        $chatgptResponse = $chatgpt->send($request->input("chatgpt_prompt['prompt']") == "{}" ? null : $request->input("chatgpt_prompt['prompt']"));
 
         return response()->json($chatgptResponse);
     }

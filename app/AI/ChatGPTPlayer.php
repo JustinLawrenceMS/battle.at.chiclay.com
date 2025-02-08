@@ -15,10 +15,6 @@ class ChatGPTPlayer
 
     public function systemMessage(string $message = null): static
     {
-        if (!is_null($message)) {
-            $this->systemMessage = $message;
-        }
-
         $this->messages[] = [
             'role' => 'system',
             'content' => $this->systemMessage
@@ -29,7 +25,7 @@ class ChatGPTPlayer
         return $this;
     }
 
-    public function send(string $message): ?string
+    public function send(string $message = null): ?string
     {
         $this->messages[] = [
             'role' => 'user',

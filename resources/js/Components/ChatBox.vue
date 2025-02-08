@@ -28,7 +28,6 @@ const terminal = ref(null);
 const gamePayload = ref({});
 const waitingForUser = ref(false);
 const waitingForAI = ref(false);
-const messageQueue = ref([]);
 const isMobile = ref(false);
 
 const loaderFrames = [
@@ -52,6 +51,7 @@ const startLoaderAnimation = () => {
     currentLoaderFrame.value = loaderFrames[index];
     index = (index + 1) % loaderFrames.length;
   }, 100);
+  scrollToBottom();
 };
 
 const stopLoaderAnimation = () => {
@@ -72,71 +72,103 @@ const addMessage = (sender, text) => {
 };
 
 const simulateConversation = async () => {
-  for (let index = 0; index < 30; index++) {
-    try {
-      waitingForAI.value = true;
-      startLoaderAnimation();
-      scrollToBottom();
+  const conversationRounds = 30;
 
-      // Llama AI turn
-      const llamaResponse = await axios.get(`/api/v1/llama`, {
-        params: { llama_prompt: JSON.stringify(gamePayload.value) },
-      });
-      const llamaMessage = llamaResponse.data?.choices?.[0]?.message?.content || "No response";
-      messageQueue.value.push({ sender: "Llama (Player 1)", text: llamaMessage });
+  startLoaderAnimation();
+  await waitForUserInput();
+  stopLoaderAnimation();
+  for (let round = 0; round < conversationRounds; round++) {
+    try {
+      const llamaResponse = await getLlamaResponse(gamePayload.value);
+      console.dir(llamaResponse);
+      const llamaMessage = llamaResponse || 'No response';
+      addMessage('Llama (Player 1)', llamaMessage);
       gamePayload.value = llamaMessage;
 
-      // ChatGPT (DM) turn
-      const chatResponse = await axios.get(`/api/v1/chatgpt`, {
-        params: { chatgpt_prompt: JSON.stringify(gamePayload.value) },
-      });
-      const chatMessage = chatResponse.data || "No response";
-      messageQueue.value.push({ sender: "ChatGPT (DM)", text: chatMessage });
+      addMessage('Press SPACE or tap screen');
+      await waitForUserInput();
+
+      const chatResponse = await getChatGPTResponse(gamePayload.value);
+      const chatMessage = chatResponse || 'No response';
+      addMessage('ChatGPT (DM)', chatMessage);
       gamePayload.value = chatMessage;
-
-      waitingForAI.value = false;
-      stopLoaderAnimation();
-
-      // Wait for user input before displaying messages
-      await waitForUserInput();
+      if (round < conversationRounds - 1) {
+        addMessage('Press SPACE or tap screen');
+        await waitForUserInput();
+      }
     } catch (error) {
-      console.error("Error in AI conversation:", error);
-      messageQueue.value.push({ sender: "System", text: "An error occurred while fetching AI responses." });
-      waitingForAI.value = false;
-      stopLoaderAnimation();
-      await waitForUserInput();
+      console.error('Error in AI conversation:', error);
+      addMessage('System', 'An error occurred while fetching AI responses.');
     }
   }
 };
 
-const waitForUserInput = async () => {
-  return new Promise((resolve) => {
-    waitingForUser.value = true;
-    scrollToBottom();
+const getLlamaResponse = async (prompt) => {
+  try {
+    waitingForAI.value = true;
+    startLoaderAnimation();
+    const response = await axios.get('/api/v1/llama', { params: { llama_prompt: { prompt } } });
+    stopLoaderAnimation();
+    waitingForAI.value = false;
+    return response.data?.choices?.[0]?.message?.content || 'No response';
+  } catch (error) {
+    stopLoaderAnimation();
+    waitingForAI.value = false;
+    console.error('Error fetching Llama response:', error);
+    return 'Error fetching response';
+  }
+};
 
+
+const getChatGPTResponse = async (prompt) => {
+  try {
+    waitingForAI.value = true;
+    startLoaderAnimation();
+    const response = await axios.get('/api/v1/chatgpt', { params: { chatgpt_prompt: { prompt } } });
+    console.dir(response);
+    stopLoaderAnimation();
+    waitingForAI.value = false;
+    return response.data || 'No response';
+  } catch (error) {
+    stopLoaderAnimation();
+    waitingForAI.value = false;
+    console.error('Error fetching Llama response:', error);
+    return 'Error fetching response';
+  }
+};
+
+
+const waitForUserInput = () => {
+  return new Promise((resolve) => {
     const handler = (event) => {
-      if (event.key === " " || isMobile.value) {
-        continueConversation();
+      if (event.type === "keydown" && event.code === "Space") {
+        event.preventDefault();
         document.removeEventListener("keydown", handler);
+        document.removeEventListener("click", handler);
+        resolve();
+      } else if (event.type === "click") {
+        document.removeEventListener("keydown", handler);
+        document.removeEventListener("click", handler);
         resolve();
       }
     };
-    
+
     document.addEventListener("keydown", handler);
+    document.addEventListener("click", handler);
   });
 };
 
 const continueConversation = () => {
-  if (waitingForUser.value && messageQueue.value.length > 0) {
+  if (waitingForUser.value) {
     waitingForUser.value = false;
-    const nextMessage = messageQueue.value.shift();
-    addMessage(nextMessage.sender, nextMessage.text);
   }
 };
 
 onMounted(() => {
-  isMobile.value = /Mobi|Android/i.test(navigator.userAgent); // Detect mobile device
+  isMobile.value = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   terminal.value.focus();
+  addMessage('Press SPACE or tap screen');
+  waitForUserInput();
   simulateConversation();
 });
 
@@ -144,6 +176,7 @@ onUnmounted(() => {
   stopLoaderAnimation();
 });
 </script>
+
 
 <style scoped>
 .terminal {
