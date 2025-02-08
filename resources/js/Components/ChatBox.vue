@@ -181,8 +181,9 @@ onUnmounted(() => {
   color: #00ff00;
   font-family: "Courier New", monospace;
   padding: 10px;
-  height: 300px;
-  width: 100%;
+  height: 631px;
+  width: 80%;
+  margin: 0 auto;
   overflow-y: auto;
   border: 2px solid #00ff00;
   outline: none;
