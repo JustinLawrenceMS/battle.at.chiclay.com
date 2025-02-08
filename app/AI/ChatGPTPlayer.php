@@ -25,7 +25,7 @@ class ChatGPTPlayer
         return $this;
     }
 
-    public function send(string $message = null): ?string
+    public function send(string $message): ?string
     {
         $this->messages[] = [
             'role' => 'user',

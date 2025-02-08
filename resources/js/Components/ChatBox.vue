@@ -25,7 +25,6 @@ import { ref, onMounted, nextTick, onUnmounted } from "vue";
 
 const messages = ref([]);
 const terminal = ref(null);
-const gamePayload = ref({});
 const waitingForUser = ref(false);
 const waitingForAI = ref(false);
 const isMobile = ref(false);
@@ -73,29 +72,32 @@ const addMessage = (sender, text) => {
 
 const simulateConversation = async () => {
   const conversationRounds = 30;
+  let chatgptPayload = '';
+  let llamaPayload = '';
 
   startLoaderAnimation();
   await waitForUserInput();
   stopLoaderAnimation();
   for (let round = 0; round < conversationRounds; round++) {
     try {
-      const llamaResponse = await getLlamaResponse(gamePayload.value);
-      console.dir(llamaResponse);
-      const llamaMessage = llamaResponse || 'No response';
+      chatgptPayload = await getLlamaResponse(llamaPayload);
+      console.dir(chatgptPayload);
+      let llamaMessage = chatgptPayload || 'No response';
       addMessage('Llama (Player 1)', llamaMessage);
-      gamePayload.value = llamaMessage;
-
+      console.log("jobby", chatgptPayload);
       addMessage('Press SPACE or tap screen');
       await waitForUserInput();
 
-      const chatResponse = await getChatGPTResponse(gamePayload.value);
-      const chatMessage = chatResponse || 'No response';
+      llamaPayload = await getChatGPTResponse(chatgptPayload);
+      console.dir(llamaPayload);
+      const chatMessage = llamaPayload || 'No response';
       addMessage('ChatGPT (DM)', chatMessage);
-      gamePayload.value = chatMessage;
+
       if (round < conversationRounds - 1) {
         addMessage('Press SPACE or tap screen');
         await waitForUserInput();
       }
+
     } catch (error) {
       console.error('Error in AI conversation:', error);
       addMessage('System', 'An error occurred while fetching AI responses.');
@@ -132,7 +134,7 @@ const getChatGPTResponse = async (prompt) => {
   } catch (error) {
     stopLoaderAnimation();
     waitingForAI.value = false;
-    console.error('Error fetching Llama response:', error);
+    console.error('Error fetching ChatGPT response:', error);
     return 'Error fetching response';
   }
 };
