@@ -23,11 +23,12 @@
 import axios from "axios";
 import { ref, onMounted, nextTick, onUnmounted } from "vue";
 
-const messages = ref([]);
-const terminal = ref(null);
-const waitingForUser = ref(false);
-const waitingForAI = ref(false);
 const isMobile = ref(false);
+const messages = ref([]);
+const payload = ref("");
+const terminal = ref(null);
+const waitingForAI = ref(false);
+const waitingForUser = ref(false);
 
 const loaderFrames = [
   "⠋ Loading...",
@@ -72,26 +73,20 @@ const addMessage = (sender, text) => {
 
 const simulateConversation = async () => {
   const conversationRounds = 30;
-  let chatgptPayload = '';
-  let llamaPayload = '';
-
+  payload.value = "You are a player in a Dungeons and Dragons game.  Create a character.";
   startLoaderAnimation();
   await waitForUserInput();
   stopLoaderAnimation();
   for (let round = 0; round < conversationRounds; round++) {
     try {
-      chatgptPayload = await getLlamaResponse(llamaPayload);
-      console.dir(chatgptPayload);
-      let llamaMessage = chatgptPayload || 'No response';
-      addMessage('Llama (Player 1)', llamaMessage);
-      console.log("jobby", chatgptPayload);
+      payload.value = await getLlamaResponse(payload.value);
+      
+      addMessage('Llama (Player 1)', (payload.value || 'No response'));
       addMessage('Press SPACE or tap screen');
       await waitForUserInput();
 
-      llamaPayload = await getChatGPTResponse(chatgptPayload);
-      console.dir(llamaPayload);
-      const chatMessage = llamaPayload || 'No response';
-      addMessage('ChatGPT (DM)', chatMessage);
+      payload.value = await getChatGPTResponse(payload.value);
+      addMessage('ChatGPT (DM)', (payload.value || 'No response'));
 
       if (round < conversationRounds - 1) {
         addMessage('Press SPACE or tap screen');

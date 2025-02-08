@@ -13,7 +13,7 @@ class GameController extends Controller
     public function llamaPlay(Request $request): JsonResponse
     {
         $llama = new LlamaPlayer();
-        $llamaResponse = $llama->getLlamaResponse(in_array($request->input("llama_prompt.prompt"), ["{}", null, "No response", "null", '%7D%7B', urldecode('%7D%7B')]) ? null : $request->input("llama_prompt['prompt']"));
+        $llamaResponse = $llama->getLlamaResponse($request->input("llama_prompt.prompt"));
 
         return response()->json($llamaResponse);
     }
