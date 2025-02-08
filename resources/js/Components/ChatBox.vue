@@ -176,6 +176,10 @@ onUnmounted(() => {
 
 
 <style scoped>
+pre {
+  font-family: 'Courier New', Courier, monospace;
+}
+
 .terminal {
   background-color: black;
   color: #00ff00;
@@ -184,9 +188,18 @@ onUnmounted(() => {
   height: 631px;
   width: 80%;
   margin: 0 auto;
+  margin-top: 15px;
   overflow-y: auto;
   border: 2px solid #00ff00;
   outline: none;
+}
+
+@media screen and (max-width: 768px) {
+  .terminal {
+    width: 90%;
+    height: 60vh;
+  }
+  
 }
 
 .message {
