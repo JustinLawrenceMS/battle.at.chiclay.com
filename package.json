@@ -21,6 +21,7 @@
         "vue": "^3.3.13"
     },
     "dependencies": {
+        "dompurify": "^3.2.4",
         "llamaai": "^1.0.4"
     }
 }
