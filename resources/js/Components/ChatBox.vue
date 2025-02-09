@@ -289,7 +289,7 @@ const getLlamaResponse = async (prompt) => {
     startLoaderAnimation();
     const response = await axios.get('/api/v1/llama', { 
       params: { llama_prompt: { prompt } },
-      timeout: 5000 // timeout after 5000ms (5 seconds)
+      timeout: 10000 // timeout after 5000ms (5 seconds)
     });
     stopLoaderAnimation();
     waitingForAI.value = false;
@@ -312,7 +312,7 @@ const getChatGPTResponse = async (prompt) => {
     startLoaderAnimation();
     const response = await axios.get('/api/v1/chatgpt', {
       params: { chatgpt_prompt: { prompt } },
-      timeout: 5000 // timeout after 5000ms (5 seconds)
+      timeout: 10000 // timeout after 5000ms (5 seconds)
     });
     stopLoaderAnimation();
     waitingForAI.value = false;
