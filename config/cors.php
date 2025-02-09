@@ -19,7 +19,10 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['https://battle.at.chiclay.com'],
+    'allowed_origins' => [
+        'https://battle.at.chiclay.com',
+        'https://api.llama-ai.com',
+    ],
 
     'allowed_origins_patterns' => [],
 
