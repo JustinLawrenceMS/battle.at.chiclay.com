@@ -21,7 +21,7 @@ return [
 
     'allowed_origins' => [
         'https://battle.at.chiclay.com',
-        'https://api.llama-ai.com',
+        'https://api.llama-api.com',
     ],
 
     'allowed_origins_patterns' => [],

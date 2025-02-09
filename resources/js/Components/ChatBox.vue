@@ -287,14 +287,20 @@ const getLlamaResponse = async (prompt) => {
   try {
     waitingForAI.value = true;
     startLoaderAnimation();
-    const response = await axios.get('/api/v1/llama', { params: { llama_prompt: { prompt } } });
-    // Stop the loader as soon as the response has arrived.
+    const response = await axios.get('/api/v1/llama', { 
+      params: { llama_prompt: { prompt } },
+      timeout: 5000 // timeout after 5000ms (5 seconds)
+    });
     stopLoaderAnimation();
     waitingForAI.value = false;
     return response.data?.choices?.[0]?.message?.content || 'No response';
   } catch (error) {
     stopLoaderAnimation();
     waitingForAI.value = false;
+    if (error.code === 'ECONNABORTED') {
+      console.error('Llama response request timed out');
+      return 'Request timed out';
+    }
     console.error('Error fetching Llama response:', error);
     return 'Error fetching response';
   }
@@ -304,13 +310,20 @@ const getChatGPTResponse = async (prompt) => {
   try {
     waitingForAI.value = true;
     startLoaderAnimation();
-    const response = await axios.get('/api/v1/chatgpt', { params: { chatgpt_prompt: { prompt } } });
+    const response = await axios.get('/api/v1/chatgpt', {
+      params: { chatgpt_prompt: { prompt } },
+      timeout: 5000 // timeout after 5000ms (5 seconds)
+    });
     stopLoaderAnimation();
     waitingForAI.value = false;
     return response.data || 'No response';
   } catch (error) {
     stopLoaderAnimation();
     waitingForAI.value = false;
+    if (error.code === 'ECONNABORTED') {
+      console.error('ChatGPT response request timed out');
+      return 'Request timed out';
+    }
     console.error('Error fetching ChatGPT response:', error);
     return 'Error fetching response';
   }
