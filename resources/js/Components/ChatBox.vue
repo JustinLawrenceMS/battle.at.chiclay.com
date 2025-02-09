@@ -159,6 +159,18 @@ const waitForUserInput = () => {
   });
 };
 
+const continueConversation = (event) => {
+  // Only process events if terminalListenersEnabled is true.
+  if (!terminalListenersEnabled.value) return;
+
+  // If waiting for user input, resume the conversation.
+  if (waitingForUser.value && currentResolver.value) {
+    currentResolver.value();
+    currentResolver.value = null;
+    waitingForUser.value = false;
+  }
+};
+
 const humanPlayerJumpIn = () => {
   console.log("Human Player button clicked");
   // If terminal listeners are disabled, then the [+] button acts as
@@ -203,11 +215,7 @@ const player2Message = ref("");
 
 // Modify simulateConversation to store prompts and then concatenate them.
 const simulateConversation = async () => {
-  const conversationRounds = 30;
   // Initial prompt for player 1 (if needed)
-  payload.value = "You are a player in a Dungeons and Dragons game. Create a character.";
-  
-  // Always start with Player 1’s turn.
   currentTurn.value = "player1";
   
   while (true) {
@@ -216,7 +224,7 @@ const simulateConversation = async () => {
       startLoaderAnimation();
       
       // Generate player 1's message.
-      payload.value = await getLlamaResponse(payload.value);
+      payload.value = await getLlamaResponse(payload.value ?? "You are a player in a Dungeons and Dragons game. Create a character.");
       stopLoaderAnimation();
       waitingForAI.value = false;
       player1Message.value = payload.value || 'No response';
@@ -289,7 +297,7 @@ const getLlamaResponse = async (prompt) => {
     startLoaderAnimation();
     const response = await axios.get('/api/v1/llama', { 
       params: { llama_prompt: { prompt } },
-      timeout: 10000 // timeout after 5000ms (5 seconds)
+      timeout: 15000 // timeout after 5000ms (5 seconds)
     });
     stopLoaderAnimation();
     waitingForAI.value = false;
@@ -312,7 +320,7 @@ const getChatGPTResponse = async (prompt) => {
     startLoaderAnimation();
     const response = await axios.get('/api/v1/chatgpt', {
       params: { chatgpt_prompt: { prompt } },
-      timeout: 10000 // timeout after 5000ms (5 seconds)
+      timeout: 15000 // timeout after 5000ms (5 seconds)
     });
     stopLoaderAnimation();
     waitingForAI.value = false;

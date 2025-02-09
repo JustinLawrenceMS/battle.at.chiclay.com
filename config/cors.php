@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Cross-Origin Resource Sharing (CORS) Configuration
@@ -9,7 +8,7 @@ return [
     |
     | Here you may configure your settings for cross-origin resource sharing
     | or "CORS". This determines what cross-origin operations may execute
-    | in web browsers. You are free to adjust these settings as needed.
+    | in web browsers. Adjust these settings as needed.
     |
     | To learn more: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
     |
@@ -20,8 +19,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://battle.at.chiclay.com',
-        'https://api.llama-api.com',
+        'https://battle.at.chiclay.com:443',
     ],
 
     'allowed_origins_patterns' => [],
@@ -33,5 +31,4 @@ return [
     'max_age' => 0,
 
     'supports_credentials' => false,
-
 ];
