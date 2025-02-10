@@ -1,9 +1,9 @@
 <template>
-  <div 
-    class="terminal" 
-    ref="terminal" 
-    @keydown.space.prevent="continueConversation($event)" 
-    @click="continueConversation($event)" 
+  <div
+    class="terminal"
+    ref="terminal"
+    @keydown.space.prevent="continueConversation($event)"
+    @click="continueConversation($event)"
     tabindex="0"
   >
     <div v-for="(msg, index) in messages" :key="index" class="message">
@@ -12,12 +12,12 @@
     <!-- This input appears when a human turn is activated -->
     <div v-if="waitingForHuman" class="prompt human-input" @click.stop>
       <span>Human (Player 2):</span>
-      <input 
-        type="text" 
-        v-model="humanInput" 
+      <input
+        type="text"
+        v-model="humanInput"
         @keydown.space.stop
-        @keyup.enter="submitHumanInput" 
-        autofocus 
+        @keyup.enter="submitHumanInput"
+        autofocus
         :placeholder="isMobile ? 'Tap to enter message…' : 'Enter your message'">
     </div>
     <div v-if="waitingForAI" class="loader">
@@ -130,16 +130,16 @@ const waitForUserInput = () => {
   // Use this only for non-humanJoined rounds.
   return new Promise((resolve) => {
     currentResolver.value = resolve;
-    
+
     const handler = (event) => {
       // Only process events if terminalListenersEnabled is true.
       if (!terminalListenersEnabled.value) return;
-      
+
       // Ignore clicks from certain buttons.
       if (event.type === "click" && (event.target.closest('.scroll-to-top') || event.target.closest('.human-player'))) {
         return;
       }
-      
+
       if (event.type === "keydown" && event.code === "Space") {
         event.preventDefault();
         terminal.value.removeEventListener("keydown", handler);
@@ -195,12 +195,12 @@ const submitHumanInput = async () => {
   // Sanitize and display human's input.
   addMessage('Human (Player 2)', humanInput.value);
   waitingForHuman.value = false;
-  
+
   // Store human input (used as Player 2 message).
   player2Message.value = humanInput.value;
-  
+
   // Instead of calling getChatGPTResponse here, we let the simulateConversation loop make one concatenated API call.
-  
+
   // Clear the input.
   humanInput.value = "";
 };
@@ -217,19 +217,19 @@ const player2Message = ref("");
 const simulateConversation = async () => {
   // Initial prompt for player 1 (if needed)
   currentTurn.value = "player1";
-  
+
   while (true) {
     if (currentTurn.value === "player1") {
       waitingForAI.value = true;
       startLoaderAnimation();
-      
+
       // Generate player 1's message.
       payload.value = await getLlamaResponse(payload.value ?? "You are a player in a Dungeons and Dragons game. Create a character.");
       stopLoaderAnimation();
       waitingForAI.value = false;
       player1Message.value = payload.value || 'No response';
       addMessage('Llama (Player 1)', player1Message.value);
-      
+
       // If human has joined, force Player 2’s turn; otherwise, go directly to DM.
       if (humanJoined.value) {
         currentTurn.value = "player2";
@@ -239,7 +239,7 @@ const simulateConversation = async () => {
         await waitForUserInput();
         waitingForUser.value = false;
       }
-      
+
     } else if (currentTurn.value === "player2") {
       // Automatically load the human input element.
       waitingForHuman.value = true;
@@ -249,7 +249,7 @@ const simulateConversation = async () => {
       }
       // player2Message.value is set in submitHumanInput.
       currentTurn.value = "dm";
-      
+
     } else if (currentTurn.value === "dm") {
       // Determine which prompt to use:
       let dmPrompt = "";
@@ -260,17 +260,17 @@ const simulateConversation = async () => {
         // Only use Player 1's message.
         dmPrompt = `${player1Prefix} ${player1Message.value}`;
       }
-      
+
       waitingForAI.value = true;
       startLoaderAnimation();
       const dmResponse = await getChatGPTResponse(dmPrompt);
       stopLoaderAnimation();
       waitingForAI.value = false;
       addMessage('ChatGPT (DM)', dmResponse || 'No response');
-      
+
       // Reset for next round.
       currentTurn.value = "player1";
-      
+
       if (humanJoined.value) {
         waitingForUser.value = true;
         await new Promise(resolve => {
@@ -295,13 +295,16 @@ const getLlamaResponse = async (prompt) => {
   try {
     waitingForAI.value = true;
     startLoaderAnimation();
-    const response = await axios.get('/api/v1/llama', { 
+    const response = await axios.get('/api/v1/llama', {
       params: { llama_prompt: { prompt } },
       timeout: 15000 // timeout after 5000ms (5 seconds)
     });
     stopLoaderAnimation();
     waitingForAI.value = false;
-    return response.data?.choices?.[0]?.message?.content || 'No response';
+
+    console.log(response);
+
+    return response.data.predictions || 'No response';
   } catch (error) {
     stopLoaderAnimation();
     waitingForAI.value = false;
@@ -409,7 +412,7 @@ input::placeholder {
 .scroll-to-top, .human-player {
   background-color: rgba(0, 0, 0, 0.5);
   color: #00ff00;
-  border: 2px solid #00ff00; 
+  border: 2px solid #00ff00;
   padding: 10px;
   cursor: pointer;
   border-radius: 50%;
