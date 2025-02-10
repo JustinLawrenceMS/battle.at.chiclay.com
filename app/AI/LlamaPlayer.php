@@ -60,7 +60,9 @@ class LlamaPlayer
 
         // Using request() with method 'POST'
         $response = $this->client->request('POST', '', [
-            'instances' => json_encode($this->messages),
+            'json' => [
+                'instances' => $this->messages,
+            ],
         ]);
 
         $contents = json_decode($response->getBody()->getContents(), true);
