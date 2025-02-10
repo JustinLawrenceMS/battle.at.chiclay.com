@@ -11,7 +11,9 @@ class LlamaPlayer
     private $endpointId;
     private $projectId;
     private string $accessToken = "";
+    private array $messages = [];
     public string $url = "";
+    
     public function __construct()
     {
         $this->setToken();
@@ -23,6 +25,7 @@ class LlamaPlayer
             'base_uri' => $this->url,
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->accessToken,
+                'Content-Type'  => 'application/json'
             ],
         ]);
     }
@@ -35,17 +38,18 @@ class LlamaPlayer
             text formatting. Only play your one character. Do not speak for anyone else.";
         }
 
-        $payload = [
+        $this->messages[] = [ 
+            'role' => 'assistant',
             'instances' => [
-                'prompt' => $prompt
+                [
+                    'prompt' => $prompt
+                ]
             ],
             'parameters' => [
                 'max_tokens' => 2048,
                 "model" => "meta/llama-3.2-3b",
-                "messages" => [
-                    "role" => "user",
-                    "content" => $prompt
-                ],
+                "temperature" => 0.7,
+                "top_p" => 0.9,
                 "stream" => false,
                 "extra_body" => [
                     "google" => [
@@ -58,8 +62,9 @@ class LlamaPlayer
             ]
         ];
 
-        $response = $this->client->request('POST', '',  [
-            'json' => $payload,
+        // Using request() with method 'POST'
+        $response = $this->client->request('POST', '', [
+            'json' => $this->messages,
         ]);
 
         $contents = json_decode($response->getBody()->getContents(), true);
@@ -67,18 +72,18 @@ class LlamaPlayer
         \Log::info('Llama API Response:', ['response' => $contents]);
 
         $setter = new ChatGPTPlayer();
-        $setter->setMessages("user", json_encode($contents));
+        $setter->setMessages("assistant", json_encode($contents));
+
         return $contents;
     }
 
     public function setSession(string $llm): void
     {
-        $this->setSession("llama");
+        session(['llama' => $llm]);
     }
 
     private function setToken(): void
     {
-        // Authenticate using the service account
         $credentials = ApplicationDefaultCredentials::getCredentials('https://www.googleapis.com/auth/cloud-platform');
         $token = $credentials->fetchAuthToken();
         $this->accessToken = $token['access_token'];
