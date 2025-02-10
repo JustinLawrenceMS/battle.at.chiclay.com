@@ -40,11 +40,7 @@ class LlamaPlayer
 
         $this->messages[] = [ 
             'role' => 'assistant',
-            'instances' => [
-                [
-                    'prompt' => $prompt
-                ]
-            ],
+            'prompt' => $prompt,
             'parameters' => [
                 'max_tokens' => 2048,
                 "model" => "meta/llama-3.2-3b",
@@ -64,7 +60,7 @@ class LlamaPlayer
 
         // Using request() with method 'POST'
         $response = $this->client->request('POST', '', [
-            'json' => $this->messages,
+            'instances' => json_encode($this->messages),
         ]);
 
         $contents = json_decode($response->getBody()->getContents(), true);
@@ -79,7 +75,7 @@ class LlamaPlayer
 
     public function setSession(string $llm): void
     {
-        session(['llama' => $llm]);
+        session($llm);
     }
 
     private function setToken(): void
