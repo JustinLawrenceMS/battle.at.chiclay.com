@@ -19,7 +19,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://battle.at.chiclay.com:443',
+        env('CORS_ALLOWED_ORIGIN', 'https://battle.at.chiclay.com:443'),
     ],
 
     'allowed_origins_patterns' => [],

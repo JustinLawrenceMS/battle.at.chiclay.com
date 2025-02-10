@@ -2,20 +2,29 @@
 
 namespace App\AI;
 
+use Google\Auth\ApplicationDefaultCredentials;
 use GuzzleHttp\Client;
 
 class LlamaPlayer
 {
     private $apiKey;
     private $client;
-    private $messages;
+    private string $endpointId = "";
+    private string $projectId = "";
+
     public function __construct()
     {
-        $this->apiKey = config('services.llama.api_key');
+        // Authenticate using the service account
+        $credentials = ApplicationDefaultCredentials::getCredentials('https://www.googleapis.com/auth/cloud-platform');
+        $token = $credentials->fetchAuthToken();
+        $accessToken = $token['access_token'];
+
+        $this->endpointId = config('services.vertex.llama.endpoint_id');
+        $this->projectId = config('services.vertex.llama.project_id');
         $this->client = new Client([
-            'base_uri' => 'https://api.llama-api.com/',
+            'base_uri' => "https://us-central1-aiplatform.googleapis.com/v1/projects/{ $this->projectId }/locations/us-central1/endpoints/{ $this->endpointId }:predict",
             'headers' => [
-                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Authorization' => 'Bearer ' . $accessToken,
             ],
         ]);
     }

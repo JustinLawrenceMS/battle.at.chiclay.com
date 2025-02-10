@@ -34,7 +34,12 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-	'llama' => [
-		'api_key' => env('LLAMA_API_KEY'),
+	'vertex' => [
+		[
+            'llama' => [
+                'project_id' => env('LLAMA_PROJECT_ID'),
+                'endpoint_id' => env('LLAMA_ENDPOINT_ID'),
+            ],
+        ],
 	],
 ];
