@@ -38,9 +38,10 @@ class LlamaPlayer
             text formatting. Only play your one character. Do not speak for anyone else.";
         }
 
+
         $this->messages[] = [ 
             'role' => 'assistant',
-            'prompt' => $prompt,
+            'instances' => ['prompt' => $prompt],
             'parameters' => [
                 'max_tokens' => 2048,
                 "model" => "meta/llama-3.2-3b",
@@ -60,11 +61,8 @@ class LlamaPlayer
 
         // Using request() with method 'POST'
         $response = $this->client->request('POST', '', [
-            'json' => [
-                'instances' => $this->messages,
-            ],
+            'json' => $this->messages
         ]);
-
         $contents = json_decode($response->getBody()->getContents(), true);
 
         \Log::info('Llama API Response:', ['response' => $contents]);
