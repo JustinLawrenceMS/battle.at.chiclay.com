@@ -289,8 +289,7 @@ const getGeminiResponse = async (prompt) => {
             console.error("Gemini response request timed out");
             return "Request timed out";
         }
-        console.error("Error fetching Gemini response:
-        ", error);
+        console.error(" Error fetching Gemini response:", error);
         return "Error fetching response";
     }
 };
