@@ -8,7 +8,9 @@ use Throwable;
 
 class GeminiPlayer
 {
-   public function __construct()
+    private string $apiKey;
+
+    public function __construct()
     {
         $this->apiKey = config('services.gemini.api_key');
     }

@@ -25,7 +25,7 @@ class LlamaPlayer
             'base_uri' => $this->url,
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->accessToken,
-                'Content-Type'  => 'application/json'
+                'Content-Type' => 'application/json'
             ],
             'http_errors' => false,
         ]);
@@ -42,22 +42,22 @@ class LlamaPlayer
 
 
         $message = [
-		'instances' => [
-			['prompt' => $prompt],
-		],
-		'parameters' => [
-			"temperature" => 0.7,
-			"top_p" => 0.9,
-			"top_k" => 40,
-			"max_tokens" => 2048,
-			"role" => "assistant",
-		]
-	];
+            'instances' => [
+                ['prompt' => $prompt],
+            ],
+            'parameters' => [
+                "temperature" => 0.7,
+                "top_p" => 0.9,
+                "top_k" => 40,
+                "max_tokens" => 2048,
+                "role" => "assistant",
+            ]
+        ];
 
         // Using request() with method 'POST'
         $response = $this->client->request('POST', '', [
-	    'json' => $message
-	]);
+            'json' => $message
+        ]);
 
         $contents = json_decode($response->getBody()->getContents(), true);
 

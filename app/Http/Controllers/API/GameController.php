@@ -22,12 +22,12 @@ class GameController extends Controller
     public function chatgptPlay(Request $request): JsonResponse
     {
         $chatgpt = new ChatGPTPlayer();
-	    $chatgptResponse = $chatgpt->send($request->input("chatgpt_prompt.prompt"));
+        $chatgptResponse = $chatgpt->send($request->input("chatgpt_prompt.prompt"));
 
         return response()->json($chatgptResponse);
     }
 
-        public function geminiPlay(Request $request): JsonResponse
+    public function geminiPlay(Request $request): JsonResponse
     {
         $prompt = $request->input('gemini_prompt.prompt') ?? null;
 

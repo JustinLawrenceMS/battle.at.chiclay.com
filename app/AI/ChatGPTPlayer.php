@@ -35,7 +35,7 @@ class ChatGPTPlayer
         $this->systemMessage();
 
         $response = OpenAI::chat()->create([
-            "model"    => "gpt-4-turbo",
+            "model" => "gpt-4-turbo",
             'max_tokens' => 4096,
             "messages" => $this->messages
         ])->choices[0]->message->content;
@@ -75,24 +75,26 @@ class ChatGPTPlayer
     public function setSession(string $llm): void
     {
         if (!session($llm)) {
-            session([
-                $llm => [
-                    'messages' => json_encode(
-                        $this->messages, 
-                        JSON_PRETTY_PRINT)
-                        ]
+            session(
+                [
+                    $llm => [
+                        'messages' => json_encode(
+                            $this->messages,
+                            JSON_PRETTY_PRINT
+                        )
                     ]
-                );
+                ]
+            );
         } else {
             $sess = json_decode(session($llm . '.messages'), true);
             $merge = array_merge($sess, $this->messages);
 
             // Remove duplicates from the multidimensional array
             $unique = array_map(
-                'unserialize', 
+                'unserialize',
                 array_unique(
                     array_map(
-                        'serialize', 
+                        'serialize',
                         $merge
                     )
                 )
@@ -102,16 +104,17 @@ class ChatGPTPlayer
                 [
                     $llm => [
                         'messages' => json_encode(
-                            $unique, 
-                            JSON_PRETTY_PRINT)
-                        ]
+                            $unique,
+                            JSON_PRETTY_PRINT
+                        )
                     ]
-                );
+                ]
+            );
 
             $this->messages = json_decode(
                 session(
-                    $llm 
-                )['messages'], 
+                    $llm
+                )['messages'],
                 true
             );
         }
