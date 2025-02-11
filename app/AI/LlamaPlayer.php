@@ -13,7 +13,7 @@ class LlamaPlayer
     private string $accessToken = "";
     private array $messages = [];
     public string $url = "";
-    
+
     public function __construct()
     {
         $this->setToken();
@@ -27,44 +27,39 @@ class LlamaPlayer
                 'Authorization' => 'Bearer ' . $this->accessToken,
                 'Content-Type'  => 'application/json'
             ],
+            'http_errors' => false,
         ]);
     }
 
     public function getLlamaResponse(mixed $prompt = null): array
     {
         if ($prompt === null || $prompt === "null") {
-            $prompt = "You are a chatbot and you are playing D&D 5e. Please create a character in D&D 5e
+            $prompt = "You are an assistant and you are playing D&D 5e. Please create a character in D&D 5e
             and return your response to the DM. Use only HTML for line breaks and
-            text formatting. Only play your one character. Do not speak for anyone else.";
+	    text formatting. Only play your one character. Do not speak for anyone else.
+	    Your answer should be between 150 and 350 words.";
         }
 
 
-        $this->messages[] = [ 
-            'role' => 'assistant',
-            'instances' => ['prompt' => $prompt],
-            'parameters' => [
-                'max_tokens' => 2048,
-                "model" => "meta/llama-3.2-3b",
-                "temperature" => 0.7,
-                "top_p" => 0.9,
-                "stream" => false,
-                "extra_body" => [
-                    "google" => [
-                        "model_safety_settings" => [
-                            "enabled" => false,
-                            "llama_guard_settings" => []
-                        ]
-                    ]
-                ]
-            ]
-        ];
+        $message = [
+		'instances' => [
+			['prompt' => $prompt],
+		],
+		'parameters' => [
+			"temperature" => 0.7,
+			"top_p" => 0.9,
+			"top_k" => 40,
+			"max_tokens" => 2048,
+			"role" => "assistant",
+		]
+	];
 
         // Using request() with method 'POST'
         $response = $this->client->request('POST', '', [
-            'json' => $this->messages
-        ]);
-        $contents = json_decode($response->getBody()->getContents(), true);
+	    'json' => $message 
+	]);
 
+        $contents = json_decode($response->getBody()->getContents(), true);
         \Log::info('Llama API Response:', ['response' => $contents]);
 
         $setter = new ChatGPTPlayer();

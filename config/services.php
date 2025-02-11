@@ -41,5 +41,8 @@ return [
                 'endpoint_id' => env('LLAMA_ENDPOINT_ID'),
             ],
         ],
-	],
+    ],
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+    ]
 ];
