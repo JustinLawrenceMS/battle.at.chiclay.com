@@ -53,14 +53,12 @@ const terminal = ref(null);
 const waitingForAI = ref(false);
 const waitingForUser = ref(false);
 const waitingForHuman = ref(false);
-const terminalListenersEnabled = ref(true); // NEW flag
-const currentResolver = ref(null); // to store the resolver for waitForUserInput
+const terminalListenersEnabled = ref(true);
+const currentResolver = ref(null);
 
-// NEW reactive variables for turn order.
+// Turn order variables.
 const currentTurn = ref("player1"); // can be "player1", "player2", or "dm"
 const humanRequested = ref(false);
-
-// NEW reactive flag that remains true once the human has joined.
 const humanJoined = ref(false);
 
 const loaderFrames = [
@@ -99,20 +97,10 @@ const scrollToBottom = () => {
   });
 };
 
-const scrollToTop = () => {
-  nextTick(() => {
-    if (terminal.value) {
-      terminal.value.scrollTop = 0;
-    }
-  });
-};
-
 const scrollToLatestMessage = () => {
-  console.log("scrollToLatestMessage triggered");
   nextTick(() => {
     const messageElements = terminal.value.querySelectorAll('.prompt');
     if(messageElements.length >= 2){
-      // Use the penultimate prompt because the last one is typically the "Press SPACE..." prompt.
       const lastMessageElement = messageElements[messageElements.length - 2];
       lastMessageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -120,26 +108,19 @@ const scrollToLatestMessage = () => {
 };
 
 const addMessage = (sender, text) => {
-  // Sanitize the text to prevent XSS attacks.
   const safeText = DOMPurify.sanitize(text);
   messages.value.push({ sender, text: safeText });
   scrollToBottom();
 };
 
 const waitForUserInput = () => {
-  // Use this only for non-humanJoined rounds.
   return new Promise((resolve) => {
     currentResolver.value = resolve;
-
     const handler = (event) => {
-      // Only process events if terminalListenersEnabled is true.
       if (!terminalListenersEnabled.value) return;
-
-      // Ignore clicks from certain buttons.
       if (event.type === "click" && (event.target.closest('.scroll-to-top') || event.target.closest('.human-player'))) {
         return;
       }
-
       if (event.type === "keydown" && event.code === "Space") {
         event.preventDefault();
         terminal.value.removeEventListener("keydown", handler);
@@ -153,17 +134,13 @@ const waitForUserInput = () => {
         resolve();
       }
     };
-
     terminal.value.addEventListener("keydown", handler);
     terminal.value.addEventListener("click", handler);
   });
 };
 
 const continueConversation = (event) => {
-  // Only process events if terminalListenersEnabled is true.
   if (!terminalListenersEnabled.value) return;
-
-  // If waiting for user input, resume the conversation.
   if (waitingForUser.value && currentResolver.value) {
     currentResolver.value();
     currentResolver.value = null;
@@ -172,9 +149,6 @@ const continueConversation = (event) => {
 };
 
 const humanPlayerJumpIn = () => {
-  console.log("Human Player button clicked");
-  // If terminal listeners are disabled, then the [+] button acts as
-  // a resume trigger.
   if (!terminalListenersEnabled.value) {
     terminalListenersEnabled.value = true;
     if (currentResolver.value) {
@@ -184,53 +158,39 @@ const humanPlayerJumpIn = () => {
     waitingForUser.value = false;
     return;
   }
-  // First time the human joins:
   humanJoined.value = true;
-  // Disable terminal listeners so SPACE/tap won't resume.
   terminalListenersEnabled.value = false;
   waitingForHuman.value = true;
 };
 
 const submitHumanInput = async () => {
-  // Sanitize and display human's input.
   addMessage('Human (Player 2)', humanInput.value);
   waitingForHuman.value = false;
-
-  // Store human input (used as Player 2 message).
   player2Message.value = humanInput.value;
-
-  // Instead of calling getChatGPTResponse here, we let the simulateConversation loop make one concatenated API call.
-
-  // Clear the input.
   humanInput.value = "";
 };
 
-// Remove character names. Use fixed labels.
+// Fixed labels.
 const player1Prefix = "This is player 1:";
 const player2Prefix = "This is player 2:";
 
-// NEW variables to store the individual prompts.
+// Store individual prompts.
 const player1Message = ref("");
 const player2Message = ref("");
 
-// Modify simulateConversation to store prompts and then concatenate them.
+// Modify simulateConversation to use Gemini for Player 1.
 const simulateConversation = async () => {
-  // Initial prompt for player 1 (if needed)
   currentTurn.value = "player1";
-
   while (true) {
     if (currentTurn.value === "player1") {
       waitingForAI.value = true;
       startLoaderAnimation();
-
-      // Generate player 1's message.
-      payload.value = await getLlamaResponse(payload.value ?? "You are a player in a Dungeons and Dragons game. Create a character.");
+      // Call Gemini instead of Llama.
+      payload.value = await getGeminiResponse(payload.value ?? "You are a player in a Dungeons and Dragons game. Create a character.");
       stopLoaderAnimation();
       waitingForAI.value = false;
       player1Message.value = payload.value || 'No response';
-      addMessage('Llama (Player 1)', player1Message.value);
-
-      // If human has joined, force Player 2’s turn; otherwise, go directly to DM.
+      addMessage('Gemini (Player 1)', player1Message.value);
       if (humanJoined.value) {
         currentTurn.value = "player2";
       } else {
@@ -239,38 +199,26 @@ const simulateConversation = async () => {
         await waitForUserInput();
         waitingForUser.value = false;
       }
-
     } else if (currentTurn.value === "player2") {
-      // Automatically load the human input element.
       waitingForHuman.value = true;
-      // Poll until the human input is submitted.
       while (waitingForHuman.value) {
         await new Promise(r => setTimeout(r, 100));
       }
-      // player2Message.value is set in submitHumanInput.
       currentTurn.value = "dm";
-
     } else if (currentTurn.value === "dm") {
-      // Determine which prompt to use:
       let dmPrompt = "";
       if (humanJoined.value) {
-        // Concatenate Player 1 and Player 2's messages.
         dmPrompt = `${player1Prefix} ${player1Message.value}\n${player2Prefix} ${player2Message.value}`;
       } else {
-        // Only use Player 1's message.
         dmPrompt = `${player1Prefix} ${player1Message.value}`;
       }
-
       waitingForAI.value = true;
       startLoaderAnimation();
       const dmResponse = await getChatGPTResponse(dmPrompt);
       stopLoaderAnimation();
       waitingForAI.value = false;
       addMessage('ChatGPT (DM)', dmResponse || 'No response');
-
-      // Reset for next round.
       currentTurn.value = "player1";
-
       if (humanJoined.value) {
         waitingForUser.value = true;
         await new Promise(resolve => {
@@ -291,28 +239,26 @@ const simulateConversation = async () => {
   }
 };
 
-const getLlamaResponse = async (prompt) => {
+const getGeminiResponse = async (prompt) => {
   try {
     waitingForAI.value = true;
     startLoaderAnimation();
-    const response = await axios.get('/api/v1/llama', {
-      params: { llama_prompt: { prompt } },
-      timeout: 15000 // timeout after 5000ms (5 seconds)
+    const response = await axios.get('/api/v1/gemini', {
+      params: { gemini_prompt: { prompt } },
+      timeout: 15000
     });
     stopLoaderAnimation();
     waitingForAI.value = false;
-
     console.log(response);
-
     return response.data.predictions || 'No response';
   } catch (error) {
     stopLoaderAnimation();
     waitingForAI.value = false;
     if (error.code === 'ECONNABORTED') {
-      console.error('Llama response request timed out');
+      console.error('Gemini response request timed out');
       return 'Request timed out';
     }
-    console.error('Error fetching Llama response:', error);
+    console.error('Error fetching Gemini response:', error);
     return 'Error fetching response';
   }
 };
@@ -323,7 +269,7 @@ const getChatGPTResponse = async (prompt) => {
     startLoaderAnimation();
     const response = await axios.get('/api/v1/chatgpt', {
       params: { chatgpt_prompt: { prompt } },
-      timeout: 15000 // timeout after 5000ms (5 seconds)
+      timeout: 15000
     });
     stopLoaderAnimation();
     waitingForAI.value = false;
@@ -350,7 +296,6 @@ onUnmounted(() => {
   stopLoaderAnimation();
 });
 </script>
-
 
 <style scoped>
 pre {
@@ -430,7 +375,6 @@ input::placeholder {
   margin-top: 11px;
 }
 
-/* Position Human Player button a bit to the left */
 .human-player {
   right: 60px;
 }
