@@ -12,7 +12,7 @@
         </div>
         <!-- This input appears when a human turn is activated -->
         <div v-if="waitingForHuman" class="prompt human-input" @click.stop>
-            <span>Human (Player 2):</span>
+            <span>Human (Player 2): </span>
             <input
                 type="text"
                 v-model="humanInput"
@@ -161,18 +161,26 @@ const continueConversation = (event) => {
 };
 
 const humanPlayerJumpIn = () => {
-    if (!terminalListenersEnabled.value) {
-        terminalListenersEnabled.value = true;
-        if (currentResolver.value) {
-            currentResolver.value();
-            currentResolver.value = null;
-        }
-        waitingForUser.value = false;
-        return;
+  // Validate that it's player 2's turn
+  if (currentTurn.value !== "player2") {
+    addMessage("System", " It's not your turn to play. Wait for player 1.");
+    return;
+  }
+
+  // If terminal listeners are disabled, re-enable and resolve waiting
+  if (!terminalListenersEnabled.value) {
+    terminalListenersEnabled.value = true;
+    if (currentResolver.value) {
+      currentResolver.value();
+      currentResolver.value = null;
     }
-    humanJoined.value = true;
-    terminalListenersEnabled.value = false;
-    waitingForHuman.value = true;
+    waitingForUser.value = false;
+    return;
+  }
+  
+  humanJoined.value = true;
+  terminalListenersEnabled.value = false;
+  waitingForHuman.value = true;
 };
 
 const submitHumanInput = async () => {
@@ -180,12 +188,12 @@ const submitHumanInput = async () => {
     if (currentTurn.value !== "player2" || !waitingForHuman.value) {
         addMessage(
             "System",
-            "It's not your turn yet. Please wait for your turn before playing."
+            " It's not your turn yet. Wait for player 1." 
         );
         return;
     }
 
-    addMessage("Human (Player 2)", humanInput.value);
+    addMessage("Human (Player 2)", " " + humanInput.value);
     waitingForHuman.value = false;
     player2Message.value = humanInput.value;
     humanInput.value = "";
@@ -214,7 +222,7 @@ const simulateConversation = async () => {
             stopLoaderAnimation();
             waitingForAI.value = false;
             player1Message.value = payload.value || "No response";
-            addMessage("Gemini (Player 1)", player1Message.value);
+            addMessage("Gemini (Player 1)", " " + player1Message.value);
             if (humanJoined.value) {
                 currentTurn.value = "player2";
             } else {
@@ -241,7 +249,7 @@ const simulateConversation = async () => {
             const dmResponse = await getChatGPTResponse(dmPrompt);
             stopLoaderAnimation();
             waitingForAI.value = false;
-            addMessage("ChatGPT (DM)", dmResponse || "No response");
+            addMessage("ChatGPT (DM)", " " + dmResponse || "No response");
             currentTurn.value = "player1";
             if (humanJoined.value) {
                 waitingForUser.value = true;
@@ -281,7 +289,8 @@ const getGeminiResponse = async (prompt) => {
             console.error("Gemini response request timed out");
             return "Request timed out";
         }
-        console.error("Error fetching Gemini response:", error);
+        console.error("Error fetching Gemini response:
+        ", error);
         return "Error fetching response";
     }
 };
