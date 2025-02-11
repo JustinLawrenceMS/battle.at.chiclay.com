@@ -197,7 +197,7 @@ const submitHumanInput = async () => {
     waitingForHuman.value = false;
     player2Message.value = humanInput.value;
     payload.value += player2Message.value;
-    payload.value = payload.value.substring(0, 15999); // truncate to 16kb  
+    payload.value = payload.value.slice(-15999); // truncate to 16kb  
     humanInput.value = "";
 };
 
@@ -221,7 +221,7 @@ const simulateConversation = async () => {
                 payload.value ??
                     "You are a gaming assistant. You are beginning a Dungeons and Dragons 5e game. Create a character."
             );
-            payload.value = payload.value.substring(0, 15999); // truncate to 16kb
+            payload.value = payload.value.slice(-15999); // truncate to 16kb
             stopLoaderAnimation();
             waitingForAI.value = false;
             player1Message.value = payload.value || "No response";
@@ -251,7 +251,7 @@ const simulateConversation = async () => {
             startLoaderAnimation();
             const dmResponse = await getChatGPTResponse(dmPrompt);
             payload.value += dmResponse;
-            payload.value = payload.value.substring(0, 15999); // truncate to 16kb
+            payload.value = payload.value.slice(-15999); // truncate to 16kb
             stopLoaderAnimation();
             waitingForAI.value = false;
             addMessage("ChatGPT (DM)", " " + dmResponse || "No response");
