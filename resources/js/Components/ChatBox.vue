@@ -161,9 +161,9 @@ const continueConversation = (event) => {
 };
 
 const humanPlayerJumpIn = () => {
-  // Validate that it's player 2's turn
-  if (currentTurn.value !== "player2") {
-    addMessage("System", " It's not your turn to play. Wait for player 1.");
+  // Allow jump in if the turn is either "dm" or already "player2"
+  if (!["dm", "player2"].includes(currentTurn.value)) {
+    addMessage("System", "It's not your turn to play. Please wait for player 1 before joining.");
     return;
   }
 
@@ -179,6 +179,8 @@ const humanPlayerJumpIn = () => {
   }
   
   humanJoined.value = true;
+  // Optionally force the turn to player2 if coming from a dm state.
+  currentTurn.value = "player2";
   terminalListenersEnabled.value = false;
   waitingForHuman.value = true;
 };
