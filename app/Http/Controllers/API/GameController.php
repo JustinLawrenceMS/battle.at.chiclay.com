@@ -27,12 +27,9 @@ class GameController extends Controller
         return response()->json($chatgptResponse);
     }
 
-        public function play(Request $request): JsonResponse
+        public function geminiPlay(Request $request): JsonResponse
     {
-        $playerAction = $request->input('action');
-        $character = $request->input('character', 'an AI-controlled adventurer');
-
-        $prompt = "In a Dungeons & Dragons game, {$character} is about to act. The situation is: {$playerAction}. What does the character do next? Provide a concise, roleplay-friendly response.";
+        $prompt = $request->input('gemini_prompt.prompt') ?? null;
 
         $response = (new GeminiPlayer)->generateGeminiResponse($prompt);
 

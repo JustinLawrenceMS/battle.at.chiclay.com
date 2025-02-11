@@ -186,7 +186,7 @@ const simulateConversation = async () => {
       waitingForAI.value = true;
       startLoaderAnimation();
       // Call Gemini instead of Llama.
-      payload.value = await getGeminiResponse(payload.value ?? "You are a player in a Dungeons and Dragons game. Create a character.");
+      payload.value = await getGeminiResponse(payload.value ?? "You are a gaming assistant. You are beginning a Dungeons and Dragons 5e game. Create a character.");
       stopLoaderAnimation();
       waitingForAI.value = false;
       player1Message.value = payload.value || 'No response';
@@ -249,39 +249,38 @@ const getGeminiResponse = async (prompt) => {
     });
     stopLoaderAnimation();
     waitingForAI.value = false;
-    console.log(response);
-    return response.data.predictions || 'No response';
-  } catch (error) {
-    stopLoaderAnimation();
-    waitingForAI.value = false;
-    if (error.code === 'ECONNABORTED') {
-      console.error('Gemini response request timed out');
-      return 'Request timed out';
-    }
-    console.error('Error fetching Gemini response:', error);
-    return 'Error fetching response';
-  }
-};
+        return response.data.response || 'No response';
+      } catch (error) {
+        stopLoaderAnimation();
+        waitingForAI.value = false;
+        if (error.code === 'ECONNABORTED') {
+          console.error('Gemini response request timed out');
+          return 'Request timed out';
+        }
+        console.error('Error fetching Gemini response:', error);
+        return 'Error fetching response';
+      }
+    };
 
-const getChatGPTResponse = async (prompt) => {
-  try {
-    waitingForAI.value = true;
-    startLoaderAnimation();
-    const response = await axios.get('/api/v1/chatgpt', {
-      params: { chatgpt_prompt: { prompt } },
-      timeout: 15000
-    });
-    stopLoaderAnimation();
-    waitingForAI.value = false;
-    return response.data || 'No response';
-  } catch (error) {
-    stopLoaderAnimation();
-    waitingForAI.value = false;
-    if (error.code === 'ECONNABORTED') {
-      console.error('ChatGPT response request timed out');
-      return 'Request timed out';
-    }
-    console.error('Error fetching ChatGPT response:', error);
+    const getChatGPTResponse = async (prompt) => {
+      try {
+        waitingForAI.value = true;
+        startLoaderAnimation();
+        const response = await axios.get('/api/v1/chatgpt', {
+          params: { chatgpt_prompt: { prompt } },
+          timeout: 25000
+        });
+        stopLoaderAnimation();
+        waitingForAI.value = false;
+        return response.data || 'No response';
+      } catch (error) {
+        stopLoaderAnimation();
+        waitingForAI.value = false;
+        if (error.code === 'ECONNABORTED') {
+          console.error('ChatGPT response request timed out');
+          return 'Request timed out';
+        }
+        console.error('Error fetching ChatGPT response:', error);
     return 'Error fetching response';
   }
 };

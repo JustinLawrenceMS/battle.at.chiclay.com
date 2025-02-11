@@ -56,11 +56,10 @@ class LlamaPlayer
 
         // Using request() with method 'POST'
         $response = $this->client->request('POST', '', [
-	    'json' => $message 
+	    'json' => $message
 	]);
 
         $contents = json_decode($response->getBody()->getContents(), true);
-        \Log::info('Llama API Response:', ['response' => $contents]);
 
         $setter = new ChatGPTPlayer();
         $setter->setMessages("assistant", json_encode($contents));
