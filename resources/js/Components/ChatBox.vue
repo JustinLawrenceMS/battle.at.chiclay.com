@@ -161,9 +161,9 @@ const continueConversation = (event) => {
 };
 
 const humanPlayerJumpIn = () => {
-  // Allow jump in if the turn is either "dm" or already "player2"
-  if (!["dm", "player2"].includes(currentTurn.value)) {
-    addMessage("System", "It's not your turn to play. Please wait for player 1 before joining.");
+  // Validate that it's player 2's turn
+  if (currentTurn.value !== "player2") {
+    addMessage("System", " It's not your turn to play. Wait for player 1.");
     return;
   }
 
@@ -179,8 +179,6 @@ const humanPlayerJumpIn = () => {
   }
   
   humanJoined.value = true;
-  // Optionally force the turn to player2 if coming from a dm state.
-  currentTurn.value = "player2";
   terminalListenersEnabled.value = false;
   waitingForHuman.value = true;
 };
@@ -198,6 +196,7 @@ const submitHumanInput = async () => {
     addMessage("Human (Player 2)", " " + humanInput.value);
     waitingForHuman.value = false;
     player2Message.value = humanInput.value;
+    payload.value += player2Message.value;
     humanInput.value = "";
 };
 
@@ -249,6 +248,7 @@ const simulateConversation = async () => {
             waitingForAI.value = true;
             startLoaderAnimation();
             const dmResponse = await getChatGPTResponse(dmPrompt);
+            payload.value += dmResponse;
             stopLoaderAnimation();
             waitingForAI.value = false;
             addMessage("ChatGPT (DM)", " " + dmResponse || "No response");
