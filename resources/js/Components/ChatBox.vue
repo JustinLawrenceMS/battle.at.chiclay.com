@@ -162,7 +162,7 @@ const continueConversation = (event) => {
 
 const humanPlayerJumpIn = () => {
   // Validate that it's player 2's turn
-  if (currentTurn.value !== "player2") {
+  if (currentTurn.value !== "player1") {
     addMessage("System", " It's not your turn to play. Wait for player 1.");
     return;
   }
