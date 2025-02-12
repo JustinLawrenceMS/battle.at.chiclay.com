@@ -59,7 +59,7 @@ const waitingForUser = ref(false);
 const waitingForHuman = ref(false);
 const terminalListenersEnabled = ref(true);
 const currentResolver = ref(null);
-
+const requestTimedOut = ref(3);
 // Turn order variables.
 const currentTurn = ref("player1"); // can be "player1", "player2", or "dm"
 const humanRequested = ref(false);
