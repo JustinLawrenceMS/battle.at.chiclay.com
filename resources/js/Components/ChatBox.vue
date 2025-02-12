@@ -192,9 +192,15 @@ const submitHumanInput = async () => {
         );
         return;
     }
+    waitingForHuman.value = false;
+
+    if (requestTimedOut.value < 2) {
+        humanInput.value = "Player 2 timed out";
+        requestTimedOut.value++;
+        return;
+    }
 
     addMessage("Human (Player 2)", " " + humanInput.value);
-    waitingForHuman.value = false;
     player2Message.value = humanInput.value;
     payload.value += player2Message.value;
     payload.value = payload.value.slice(-15999); // truncate to 16kb  
@@ -280,6 +286,11 @@ const getGeminiResponse = async (prompt) => {
     try {
         waitingForAI.value = true;
         startLoaderAnimation();
+        if (requestTimedOut.value < 2) {
+            requestTimedOut.value++;
+            return "Gemini response request timed out";
+        }
+
         const response = await axios.get("/api/v1/gemini", {
             params: { gemini_prompt: { prompt } },
             timeout: 15000,
@@ -315,6 +326,7 @@ const getChatGPTResponse = async (prompt) => {
         waitingForAI.value = false;
         if (error.code === "ECONNABORTED") {
             console.error("ChatGPT response request timed out");
+            requestTimedOut.value = 0;
             return "Request timed out";
         }
         console.error("Error fetching ChatGPT response:", error);
