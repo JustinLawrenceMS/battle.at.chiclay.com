@@ -177,7 +177,7 @@ const humanPlayerJumpIn = () => {
     waitingForUser.value = false;
     return;
   }
-  
+
   humanJoined.value = true;
   terminalListenersEnabled.value = false;
   waitingForHuman.value = true;
@@ -188,7 +188,7 @@ const submitHumanInput = async () => {
     if (currentTurn.value !== "player2" || !waitingForHuman.value) {
         addMessage(
             "System",
-            " It's not your turn yet. Wait for player 1." 
+            " It's not your turn yet. Wait for player 1."
         );
         return;
     }
@@ -201,9 +201,9 @@ const submitHumanInput = async () => {
     }
 
     addMessage("Human (Player 2)", " " + humanInput.value);
-    player2Message.value = humanInput.value;
+    player2Message.value = "this is Player 2. " + humanInput.value;
     payload.value += player2Message.value;
-    payload.value = payload.value.slice(-15999); // truncate to 16kb  
+    payload.value = payload.value.slice(-15999); // truncate to 16kb
     humanInput.value = "";
 };
 
@@ -223,14 +223,12 @@ const simulateConversation = async () => {
             waitingForAI.value = true;
             startLoaderAnimation();
             // Call Gemini instead of Llama.
-            payload.value = await getGeminiResponse(
-                payload.value ??
-                    "You are a gaming assistant. You are beginning a Dungeons and Dragons 5e game. Create a character."
-            );
+            var response = await getGeminiResponse(payload.value);
+            payload.value = response + payload.value;
             payload.value = payload.value.slice(-15999); // truncate to 16kb
             stopLoaderAnimation();
             waitingForAI.value = false;
-            player1Message.value = payload.value || "No response";
+            player1Message.value = response || "No response";
             addMessage("Gemini (Player 1)", " " + player1Message.value);
             if (humanJoined.value) {
                 currentTurn.value = "player2";
@@ -291,13 +289,13 @@ const getGeminiResponse = async (prompt) => {
             return "Gemini response request timed out";
         }
 
-        const response = await axios.get("/api/v1/gemini", {
-            params: { gemini_prompt: { prompt } },
-            timeout: 15000,
-        });
+        const response = await axios.post("/api/v1/gemini",
+            { gemini_prompt: { prompt } }, // This is the request body
+            { timeout: 15000 } // This is the config object
+        );
         stopLoaderAnimation();
         waitingForAI.value = false;
-        return response.data.response || "No response";
+        return 'this is Player 1. ' + response.data.response || "No response";
     } catch (error) {
         stopLoaderAnimation();
         waitingForAI.value = false;
@@ -314,9 +312,9 @@ const getChatGPTResponse = async (prompt) => {
     try {
         waitingForAI.value = true;
         startLoaderAnimation();
-        const response = await axios.get("/api/v1/chatgpt", {
-            params: { chatgpt_prompt: { prompt } },
-            timeout: 25000,
+        const response = await axios.post("/api/v1/chatgpt",
+            { chatgpt_prompt: { prompt } },
+            { timeout: 25000 }
         });
         stopLoaderAnimation();
         waitingForAI.value = false;

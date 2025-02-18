@@ -19,20 +19,25 @@ class GameController extends Controller
         return response()->json($llamaResponse);
     }
 
-    public function chatgptPlay(Request $request): JsonResponse
+        public function chatgptPlay(Request $request): JsonResponse
     {
         $chatgpt = new ChatGPTPlayer();
-        $chatgptResponse = $chatgpt->send($request->input("chatgpt_prompt.prompt"));
+
+        $input = $request->input("chatgpt_prompt");
+        $chatgptResponse = $chatgpt->send($input['prompt']);
 
         return response()->json($chatgptResponse);
     }
 
     public function geminiPlay(Request $request): JsonResponse
     {
-        $prompt = $request->input('gemini_prompt.prompt') ?? null;
-
-        $response = (new GeminiPlayer)->generateGeminiResponse($prompt);
+        $input = $request->input('gemini_prompt');
+        if (is_null($input)) {
+            return response()->json(['error' => 'input was null']);
+        }
+        $response = (new GeminiPlayer)->generateGeminiResponse($input['prompt']);
 
         return response()->json(['response' => $response]);
     }
 }
+

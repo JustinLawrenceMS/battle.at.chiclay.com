@@ -15,13 +15,12 @@ class GeminiPlayer
         $this->apiKey = config('services.gemini.api_key');
     }
 
-    public function generateGeminiResponse(string $prompt = null): mixed
+    public function generateGeminiResponse(string $prompt = ""): mixed
     {
-        if ($prompt === null) {  // Fixed assignment issue
-            $prompt = "You are a gaming assistant. You are playing D&D 5e. Create a character.";
-        }
+        $systemMessage = "You are a gaming assistant named Player 1.";
+        $prompt .= "You are playing D&D 5e. Create a character.";
 
-        $prompt .= "Only refer to yourself in the first person singular. Only play your own character. Do not replay in markup, if you need to format, use basic html tags. Play the game by D&D 5e rules. You are not the dungeon master.  Follow the dungeon master's lead. You are playing D&D, not writing a novel.";
+        $prompt .= "Only refer to yourself in the first person singular. There's more than one AI, so only respond to prompts addressed to Player 1. Only play your own character. Do not replay in markup, if you need to format, use basic html tags. Play the game by D&D 5e rules. You are not the dungeon master.  Follow the dungeon master's lead. You are playing D&D, not writing a novel.";
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={$this->apiKey}";
 
