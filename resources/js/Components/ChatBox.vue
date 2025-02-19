@@ -41,18 +41,19 @@
     <!-- Button to scroll to the latest message -->
     <button class="scroll-to-top" @click.stop="scrollToLatestMessage">↑</button>
     <!-- Button for a human player to jump in -->
-    <button 
-        class="human-player" 
-        @click.stop="humanPlayerJumpIn" 
-        @mouseenter="showJoinUnavailableMessage" 
-        @mouseleave="resetJoinUnavailableMessage">
+    <button
+        class="human-player"
+        @click.stop="humanPlayerJumpIn"
+        @mouseenter="showJoinUnavailableMessage"
+        @mouseleave="resetJoinUnavailableMessage"
+    >
         +
     </button>
 </template>
 
 <script setup>
 import axios from "axios";
-import { ref, onMounted, nextTick, onUnmounted } from "vue";
+import { ref, onMounted, nextTick, onUnmounted, watch } from "vue";
 import DOMPurify from "dompurify";
 
 const isMobile = ref(false);
@@ -169,35 +170,32 @@ const continueConversation = (event) => {
 const joinOpportunity = ref(true); // Only available on the first round
 
 const humanPlayerJumpIn = () => {
-  // Only allow join if we're in the join window
-  if (!joinOpportunity.value) {
-    // Silently ignore if join opportunity is over.
-    return;
-  }
-  // If terminal listeners are disabled, re-enable and resolve waiting state.
-  if (!terminalListenersEnabled.value) {
-    terminalListenersEnabled.value = true;
-    if (currentResolver.value) {
-      currentResolver.value();
-      currentResolver.value = null;
+    // Only allow a join if we are still in the join window.
+    if (!joinOpportunity.value) {
+        // Silently ignore if the join opportunity is over.
+        return;
     }
-    waitingForUser.value = false;
-    return;
-  }
-  // Process a valid join:
-  humanJoined.value = true;
-  joinOpportunity.value = false; // disable further attempts
-  terminalListenersEnabled.value = false;
-  waitingForHuman.value = true;
+    // Resolve any waiting state if necessary.
+    if (!terminalListenersEnabled.value) {
+        terminalListenersEnabled.value = true;
+        if (currentResolver.value) {
+            currentResolver.value();
+            currentResolver.value = null;
+        }
+        waitingForUser.value = false;
+        return;
+    }
+    // Process valid join request.
+    humanJoined.value = true;
+    joinOpportunity.value = false; // disable further join attempts.
+    terminalListenersEnabled.value = false;
+    waitingForHuman.value = true;
 };
 
 const submitHumanInput = async () => {
     // Validate that it is indeed player 2's turn
     if (currentTurn.value !== "player2" || !waitingForHuman.value) {
-        addMessage(
-            "System",
-            " It's not your turn yet. Wait for player 1."
-        );
+        addMessage("System", " It's not your turn yet. Wait for player 1.");
         return;
     }
     waitingForHuman.value = false;
@@ -223,70 +221,69 @@ const player2Prefix = "This is player 2:";
 const player1Message = ref("");
 const player2Message = ref("");
 
-// Modify simulateConversation to use Gemini for Player 1.
+// Replace the polling-based waitForHumanInput with a watcher-based promise:
+const waitForHumanInput = () => {
+    return new Promise((resolve) => {
+        const unwatch = watch(waitingForHuman, (newVal) => {
+            if (newVal === false) {
+                unwatch();
+                resolve();
+            }
+        });
+    });
+};
+
+// In your simulateConversation function, update the player2 branch:
 const simulateConversation = async () => {
-  currentTurn.value = "player1";
-  while (true) {
-    if (currentTurn.value === "player1") {
-      // Player 1’s turn: fetch AI response
-      waitingForAI.value = true;
-      startLoaderAnimation();
-      var response = await getGeminiResponse(payload.value);
-      // Update payload and messages
-      payload.value = response + payload.value;
-      payload.value = payload.value.slice(-15999);
-      stopLoaderAnimation();
-      waitingForAI.value = false;
-      player1Message.value = response || "No response";
-      addMessage("Gemini (Player 1)", " " + player1Message.value);
+    currentTurn.value = "player1";
+    while (true) {
+        if (currentTurn.value === "player1") {
+            // Player 1’s turn: fetch AI response.
+            waitingForAI.value = true;
+            startLoaderAnimation();
+            var response = await getGeminiResponse(payload.value);
+            payload.value = response + payload.value;
+            payload.value = payload.value.slice(-15999);
+            stopLoaderAnimation();
+            waitingForAI.value = false;
+            player1Message.value = response || "No response";
+            addMessage("Gemini (Player 1)", " " + player1Message.value);
 
-      // Only in the first round, offer a one-time join opportunity.
-      if (joinOpportunity.value) {
-        addMessage("System", "Press + to join the game as Player 2!");
-        waitingForUser.value = true;
-        // Wait for up to 5 seconds for the user to press +
-        await new Promise(resolve => setTimeout(resolve, 6000000));
-        waitingForUser.value = false;
-        // Disable further join attempts regardless of join success.
-        joinOpportunity.value = false;
-      }
+            // Offer join opportunity if still active.
+            if (joinOpportunity.value) {
+                addMessage(
+                    "System",
+                    "Press + to join the game as Player 2! (This is your only chance)"
+                );
+                waitingForUser.value = true;
+                await waitForUserInput();
+                waitingForUser.value = false;
+                joinOpportunity.value = false;
+            }
 
-      // Switch turn: if the join was successful, move to player2; otherwise, DM.
-      if (humanJoined.value) {
-        currentTurn.value = "player2";
-      } else {
-        currentTurn.value = "dm";
-      }
-    } else if (currentTurn.value === "player2") {
-      // Wait for player2's input. This branch assumes that humanPlayerJumpIn set waitingForHuman.
-      waitingForHuman.value = true;
-      while (waitingForHuman.value) {
-        await new Promise(r => setTimeout(r, 60000000));
-      }
-      currentTurn.value = "dm";
-    } else if (currentTurn.value === "dm") {
-      // DM turn: build prompt from available player messages
-      let dmPrompt = humanJoined.value
-        ? `${player1Prefix} ${player1Message.value}\n${player2Prefix} ${player2Message.value}`
-        : `${player1Prefix} ${player1Message.value}`;
-      waitingForAI.value = true;
-      startLoaderAnimation();
-      const dmResponse = await getChatGPTResponse(dmPrompt);
-      payload.value += dmResponse;
-      payload.value = payload.value.slice(-15999);
-      stopLoaderAnimation();
-      waitingForAI.value = false;
-      addMessage("ChatGPT (DM)", " " + dmResponse || "No response");
-      // After DM response, return to player1 turn.
-      currentTurn.value = "player1";
-      // Use a single waiting phase for continueConversation if no human join
-      if (!humanJoined.value) {
-        waitingForUser.value = true;
-        await waitForUserInput();
-        waitingForUser.value = false;
-      }
+            currentTurn.value = humanJoined.value ? "player2" : "dm";
+        } else if (currentTurn.value === "player2") {
+            waitingForHuman.value = true;
+            await waitForHumanInput();
+            currentTurn.value = "dm";
+        } else if (currentTurn.value === "dm") {
+            let dmPrompt = humanJoined.value
+                ? `${player1Prefix} ${player1Message.value}\n${player2Prefix} ${player2Message.value}`
+                : `${player1Prefix} ${player1Message.value}`;
+            waitingForAI.value = true;
+            startLoaderAnimation();
+            const dmResponse = await getChatGPTResponse(dmPrompt);
+            payload.value += dmResponse;
+            payload.value = payload.value.slice(-15999);
+            stopLoaderAnimation();
+            waitingForAI.value = false;
+            addMessage("ChatGPT (DM)", " " + (dmResponse || "No response"));
+            currentTurn.value = "player1";
+            waitingForUser.value = true;
+            await waitForUserInput();
+            waitingForUser.value = false;
+        }
     }
-  }
 };
 
 const getGeminiResponse = async (prompt) => {
@@ -298,13 +295,14 @@ const getGeminiResponse = async (prompt) => {
             return "Gemini response request timed out";
         }
 
-        const response = await axios.post("/api/v1/gemini",
+        const response = await axios.post(
+            "/api/v1/gemini",
             { gemini_prompt: { prompt } }, // This is the request body
             { timeout: 15000 } // This is the config object
         );
         stopLoaderAnimation();
         waitingForAI.value = false;
-        return 'this is Player 1. ' + response.data.response || "No response";
+        return "this is Player 1. " + response.data.response || "No response";
     } catch (error) {
         stopLoaderAnimation();
         waitingForAI.value = false;
@@ -321,7 +319,8 @@ const getChatGPTResponse = async (prompt) => {
     try {
         waitingForAI.value = true;
         startLoaderAnimation();
-        const response = await axios.post("/api/v1/chatgpt",
+        const response = await axios.post(
+            "/api/v1/chatgpt",
             { chatgpt_prompt: { prompt } },
             { timeout: 25000 }
         );
@@ -345,15 +344,15 @@ const getChatGPTResponse = async (prompt) => {
 const joinUnavailableMessageDisplayed = ref(false);
 
 const showJoinUnavailableMessage = () => {
-  if (!joinOpportunity.value && !joinUnavailableMessageDisplayed.value) {
-    addMessage("System", "Join game is no longer available");
-    joinUnavailableMessageDisplayed.value = true;
-  }
+    if (!joinOpportunity.value && !joinUnavailableMessageDisplayed.value) {
+        addMessage("System", "Join game is no longer available");
+        joinUnavailableMessageDisplayed.value = true;
+    }
 };
 
 const resetJoinUnavailableMessage = () => {
-  // Clear the flag once the mouse leaves the button
-  joinUnavailableMessageDisplayed.value = false;
+    // Clear the flag once the mouse leaves the button
+    joinUnavailableMessageDisplayed.value = false;
 };
 
 onMounted(() => {
