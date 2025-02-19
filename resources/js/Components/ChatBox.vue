@@ -64,7 +64,6 @@ const terminal = ref(null);
 const waitingForAI = ref(false);
 const waitingForUser = ref(false);
 const waitingForHuman = ref(false);
-const terminalListenersEnabled = ref(true);
 const currentResolver = ref(null);
 const requestTimedOut = ref(3);
 // Turn order variables.
@@ -132,7 +131,6 @@ const waitForUserInput = () => {
     return new Promise((resolve) => {
         currentResolver.value = resolve;
         const handler = (event) => {
-            if (!terminalListenersEnabled.value) return;
             if (
                 event.type === "click" &&
                 (event.target.closest(".scroll-to-top") ||
@@ -159,7 +157,6 @@ const waitForUserInput = () => {
 };
 
 const continueConversation = (event) => {
-    if (!terminalListenersEnabled.value) return;
     if (waitingForUser.value && currentResolver.value) {
         currentResolver.value();
         currentResolver.value = null;
@@ -177,7 +174,6 @@ const humanPlayerJumpIn = () => {
     // Process the join request.
     humanJoined.value = true;
     joinOpportunity.value = false; // Disable further join attempts.
-    terminalListenersEnabled.value = false;
     waitingForHuman.value = true;
 };
 
