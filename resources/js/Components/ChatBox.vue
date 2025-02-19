@@ -242,10 +242,10 @@ const simulateConversation = async () => {
 
       // Only in the first round, offer a one-time join opportunity.
       if (joinOpportunity.value) {
-        addMessage("System", "Press + to join the game as Player 2! (This is your only chance)");
+        addMessage("System", "Press + to join the game as Player 2!");
         waitingForUser.value = true;
         // Wait for up to 5 seconds for the user to press +
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise(resolve => setTimeout(resolve, 6000000));
         waitingForUser.value = false;
         // Disable further join attempts regardless of join success.
         joinOpportunity.value = false;
@@ -261,7 +261,7 @@ const simulateConversation = async () => {
       // Wait for player2's input. This branch assumes that humanPlayerJumpIn set waitingForHuman.
       waitingForHuman.value = true;
       while (waitingForHuman.value) {
-        await new Promise(r => setTimeout(r, 100));
+        await new Promise(r => setTimeout(r, 60000000));
       }
       currentTurn.value = "dm";
     } else if (currentTurn.value === "dm") {
