@@ -315,7 +315,7 @@ const getChatGPTResponse = async (prompt) => {
         const response = await axios.post("/api/v1/chatgpt",
             { chatgpt_prompt: { prompt } },
             { timeout: 25000 }
-        });
+        );
         stopLoaderAnimation();
         waitingForAI.value = false;
         return response.data || "No response";

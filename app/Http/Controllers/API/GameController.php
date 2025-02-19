@@ -31,11 +31,11 @@ class GameController extends Controller
 
     public function geminiPlay(Request $request): JsonResponse
     {
-        $input = $request->input('gemini_prompt');
+        $input = $request->input('gemini_prompt')['prompt'] ?? "";
         if (is_null($input)) {
             return response()->json(['error' => 'input was null']);
         }
-        $response = (new GeminiPlayer)->generateGeminiResponse($input['prompt']);
+        $response = (new GeminiPlayer)->generateGeminiResponse($input);
 
         return response()->json(['response' => $response]);
     }
