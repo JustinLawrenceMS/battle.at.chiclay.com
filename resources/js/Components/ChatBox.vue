@@ -166,14 +166,15 @@ const continueConversation = (event) => {
     }
 };
 
-const joinOpportunity = ref(true); // Only available on first round
+const joinOpportunity = ref(true); // Only available on the first round
 
 const humanPlayerJumpIn = () => {
-  // Only allow the join if we're in the join window; if not, silently ignore.
+  // Only allow join if we're in the join window
   if (!joinOpportunity.value) {
+    // Silently ignore if join opportunity is over.
     return;
   }
-  // If terminal listeners are disabled, re-enable them and resolve waiting state.
+  // If terminal listeners are disabled, re-enable and resolve waiting state.
   if (!terminalListenersEnabled.value) {
     terminalListenersEnabled.value = true;
     if (currentResolver.value) {
@@ -183,9 +184,9 @@ const humanPlayerJumpIn = () => {
     waitingForUser.value = false;
     return;
   }
-  // Accept the join request, disable further join opportunities, and become player2.
+  // Process a valid join:
   humanJoined.value = true;
-  joinOpportunity.value = false;
+  joinOpportunity.value = false; // disable further attempts
   terminalListenersEnabled.value = false;
   waitingForHuman.value = true;
 };
@@ -224,75 +225,78 @@ const player2Message = ref("");
 
 // Modify simulateConversation to use Gemini for Player 1.
 const simulateConversation = async () => {
-    currentTurn.value = "player1";
-    while (true) {
-        if (currentTurn.value === "player1") {
-            waitingForAI.value = true;
-            startLoaderAnimation();
-            // Call Gemini instead of Llama.
-            var response = await getGeminiResponse(payload.value);
-            payload.value = response + payload.value;
-            payload.value = payload.value.slice(-15999); // truncate to 16kb
-            stopLoaderAnimation();
-            waitingForAI.value = false;
-            player1Message.value = response || "No response";
-            addMessage("Gemini (Player 1)", " " + player1Message.value);
-            
-            // Offer the join opportunity only once (on the first round)
-            if (joinOpportunity.value) {
-                waitingForUser.value = true;
-                // Wait for a fixed interval (e.g. 5 seconds) for the user to press +
-                await new Promise(resolve => setTimeout(resolve, 5000));
-                waitingForUser.value = false;
-                joinOpportunity.value = false; // End the opportunity window
+  currentTurn.value = "player1";
+  while (true) {
+    if (currentTurn.value === "player1") {
+      waitingForAI.value = true;
+      startLoaderAnimation();
+      // Call Gemini instead of Llama.
+      var response = await getGeminiResponse(payload.value);
+      payload.value = response + payload.value;
+      payload.value = payload.value.slice(-15999); // truncate to 16kb
+      stopLoaderAnimation();
+      waitingForAI.value = false;
+      player1Message.value = response || "No response";
+      addMessage("Gemini (Player 1)", " " + player1Message.value);
+      
+      // Offer the join opportunity only during the first round
+      if (joinOpportunity.value) {
+        // Show a system message prompting the join.
+        addMessage("System", "Press + to join the game as Player 2! (This is your only chance)");
+        waitingForUser.value = true;
+        // Wait for 5 seconds
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        waitingForUser.value = false;
+        joinOpportunity.value = false; // end the opportunity window
+      }
+      
+      // If the join was successful, switch to player2's turn; otherwise, proceed with DM control.
+      if (humanJoined.value) {
+        currentTurn.value = "player2";
+      } else {
+        currentTurn.value = "dm";
+      }
+    } else if (currentTurn.value === "player2") {
+      waitingForHuman.value = true;
+      while (waitingForHuman.value) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      currentTurn.value = "dm";
+    } else if (currentTurn.value === "dm") {
+      let dmPrompt = "";
+      if (humanJoined.value) {
+        dmPrompt = `${player1Prefix} ${player1Message.value}\n${player2Prefix} ${player2Message.value}`;
+      } else {
+        dmPrompt = `${player1Prefix} ${player1Message.value}`;
+      }
+      waitingForAI.value = true;
+      startLoaderAnimation();
+      const dmResponse = await getChatGPTResponse(dmPrompt);
+      payload.value += dmResponse;
+      payload.value = payload.value.slice(-15999); // truncate to 16kb
+      stopLoaderAnimation();
+      waitingForAI.value = false;
+      addMessage("ChatGPT (DM)", " " + dmResponse || "No response");
+      currentTurn.value = "player1";
+      // Continue conversation waiting logic as before.
+      if (humanJoined.value) {
+        waitingForUser.value = true;
+        await new Promise((resolve) => {
+          const interval = setInterval(() => {
+            if (terminalListenersEnabled.value) {
+              clearInterval(interval);
+              resolve();
             }
-            
-            // If the join was successful, switch to player2's turn; else, proceed with DM control.
-            if (humanJoined.value) {
-                currentTurn.value = "player2";
-            } else {
-                currentTurn.value = "dm";
-            }
-        } else if (currentTurn.value === "player2") {
-            waitingForHuman.value = true;
-            while (waitingForHuman.value) {
-                await new Promise((r) => setTimeout(r, 100));
-            }
-            currentTurn.value = "dm";
-        } else if (currentTurn.value === "dm") {
-            let dmPrompt = "";
-            if (humanJoined.value) {
-                dmPrompt = `${player1Prefix} ${player1Message.value}\n${player2Prefix} ${player2Message.value}`;
-            } else {
-                dmPrompt = `${player1Prefix} ${player1Message.value}`;
-            }
-            waitingForAI.value = true;
-            startLoaderAnimation();
-            const dmResponse = await getChatGPTResponse(dmPrompt);
-            payload.value += dmResponse;
-            payload.value = payload.value.slice(-15999); // truncate to 16kb
-            stopLoaderAnimation();
-            waitingForAI.value = false;
-            addMessage("ChatGPT (DM)", " " + dmResponse || "No response");
-            currentTurn.value = "player1";
-            if (humanJoined.value) {
-                waitingForUser.value = true;
-                await new Promise((resolve) => {
-                    const interval = setInterval(() => {
-                        if (terminalListenersEnabled.value) {
-                            clearInterval(interval);
-                            resolve();
-                        }
-                    }, 100);
-                });
-                waitingForUser.value = false;
-            } else {
-                waitingForUser.value = true;
-                await waitForUserInput();
-                waitingForUser.value = false;
-            }
-        }
+          }, 100);
+        });
+        waitingForUser.value = false;
+      } else {
+        waitingForUser.value = true;
+        await waitForUserInput();
+        waitingForUser.value = false;
+      }
     }
+  }
 };
 
 const getGeminiResponse = async (prompt) => {
