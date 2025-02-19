@@ -179,7 +179,7 @@ const submitHumanInput = async () => {
         input: humanInput.value 
     });
 
-    if (currentTurn.value !== "player2" || !waitingForHuman.value) {
+    if (!waitingForHuman.value) {
         return;
     }
 
