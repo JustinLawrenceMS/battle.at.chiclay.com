@@ -228,69 +228,59 @@ const simulateConversation = async () => {
   currentTurn.value = "player1";
   while (true) {
     if (currentTurn.value === "player1") {
+      // Player 1’s turn: fetch AI response
       waitingForAI.value = true;
       startLoaderAnimation();
-      // Call Gemini instead of Llama.
       var response = await getGeminiResponse(payload.value);
+      // Update payload and messages
       payload.value = response + payload.value;
-      payload.value = payload.value.slice(-15999); // truncate to 16kb
+      payload.value = payload.value.slice(-15999);
       stopLoaderAnimation();
       waitingForAI.value = false;
       player1Message.value = response || "No response";
       addMessage("Gemini (Player 1)", " " + player1Message.value);
-      
-      // Offer the join opportunity only during the first round
+
+      // Only in the first round, offer a one-time join opportunity.
       if (joinOpportunity.value) {
-        // Show a system message prompting the join.
         addMessage("System", "Press + to join the game as Player 2! (This is your only chance)");
         waitingForUser.value = true;
-        // Wait for 5 seconds
+        // Wait for up to 5 seconds for the user to press +
         await new Promise(resolve => setTimeout(resolve, 5000));
         waitingForUser.value = false;
-        joinOpportunity.value = false; // end the opportunity window
+        // Disable further join attempts regardless of join success.
+        joinOpportunity.value = false;
       }
-      
-      // If the join was successful, switch to player2's turn; otherwise, proceed with DM control.
+
+      // Switch turn: if the join was successful, move to player2; otherwise, DM.
       if (humanJoined.value) {
         currentTurn.value = "player2";
       } else {
         currentTurn.value = "dm";
       }
     } else if (currentTurn.value === "player2") {
+      // Wait for player2's input. This branch assumes that humanPlayerJumpIn set waitingForHuman.
       waitingForHuman.value = true;
       while (waitingForHuman.value) {
-        await new Promise((r) => setTimeout(r, 100));
+        await new Promise(r => setTimeout(r, 100));
       }
       currentTurn.value = "dm";
     } else if (currentTurn.value === "dm") {
-      let dmPrompt = "";
-      if (humanJoined.value) {
-        dmPrompt = `${player1Prefix} ${player1Message.value}\n${player2Prefix} ${player2Message.value}`;
-      } else {
-        dmPrompt = `${player1Prefix} ${player1Message.value}`;
-      }
+      // DM turn: build prompt from available player messages
+      let dmPrompt = humanJoined.value
+        ? `${player1Prefix} ${player1Message.value}\n${player2Prefix} ${player2Message.value}`
+        : `${player1Prefix} ${player1Message.value}`;
       waitingForAI.value = true;
       startLoaderAnimation();
       const dmResponse = await getChatGPTResponse(dmPrompt);
       payload.value += dmResponse;
-      payload.value = payload.value.slice(-15999); // truncate to 16kb
+      payload.value = payload.value.slice(-15999);
       stopLoaderAnimation();
       waitingForAI.value = false;
       addMessage("ChatGPT (DM)", " " + dmResponse || "No response");
+      // After DM response, return to player1 turn.
       currentTurn.value = "player1";
-      // Continue conversation waiting logic as before.
-      if (humanJoined.value) {
-        waitingForUser.value = true;
-        await new Promise((resolve) => {
-          const interval = setInterval(() => {
-            if (terminalListenersEnabled.value) {
-              clearInterval(interval);
-              resolve();
-            }
-          }, 100);
-        });
-        waitingForUser.value = false;
-      } else {
+      // Use a single waiting phase for continueConversation if no human join
+      if (!humanJoined.value) {
         waitingForUser.value = true;
         await waitForUserInput();
         waitingForUser.value = false;
