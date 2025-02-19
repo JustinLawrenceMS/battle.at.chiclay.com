@@ -30,14 +30,9 @@
             <pre>{{ currentLoaderFrame }}</pre>
         </div>
         <div v-if="waitingForUser" class="prompt">
-            <template v-if="humanJoined">
-                <span v-if="isMobile">[Tap the (+) button to continue]</span>
-                <span v-else>[Press the (+) button to continue]</span>
-            </template>
-            <template v-else>
-                <span v-if="isMobile">[Tap to continue...]</span>
-                <span v-else>[Press SPACE to continue...]</span>
-            </template>
+            <!-- Always use the same continue prompt regardless of player join status -->
+            <span v-if="isMobile">[Tap to continue...]</span>
+            <span v-else>[Press SPACE to continue...]</span>
         </div>
     </div>
     <!-- Button to scroll to the latest message -->
@@ -168,7 +163,7 @@ const joinOpportunity = ref(true); // Only available on the first round
 
 const humanPlayerJumpIn = () => {
     if (!joinOpportunity.value) {
-        // Simply ignore if join opportunity is over.
+        // The join window is closed—simply ignore the click.
         return;
     }
     // Process the join request.
@@ -211,18 +206,6 @@ const player2Prefix = "This is player 2:";
 const player1Message = ref("");
 const player2Message = ref("");
 
-// Replace the polling-based waitForHumanInput with a watcher-based promise:
-const waitForHumanInput = () => {
-    return new Promise((resolve) => {
-        const unwatch = watch(waitingForHuman, (newVal) => {
-            if (newVal === false) {
-                unwatch();
-                resolve();
-            }
-        });
-    });
-};
-
 // In your simulateConversation function, update the player2 branch:
 const simulateConversation = async () => {
     currentTurn.value = "player1";
@@ -250,9 +233,13 @@ const simulateConversation = async () => {
             
             currentTurn.value = humanJoined.value ? "player2" : "dm";
         } else if (currentTurn.value === "player2") {
+            // Set flag to show input and then wait until submitHumanInput clears it.
             waitingForHuman.value = true;
-            await waitForHumanInput();
-            currentTurn.value = "dm";
+            // Instead of awaiting a helper, poll until the human input has been submitted.
+            while (currentTurn.value === "player2") {
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            // When submitHumanInput runs, it should set waitingForHuman to false and currentTurn to "dm".
         } else if (currentTurn.value === "dm") {
             let dmPrompt = humanJoined.value
                 ? `${player1Prefix} ${player1Message.value}\n${player2Prefix} ${player2Message.value}`
