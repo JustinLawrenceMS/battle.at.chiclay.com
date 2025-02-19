@@ -44,8 +44,6 @@
     <button
         class="human-player"
         @click.stop="humanPlayerJumpIn"
-        @mouseenter="showJoinUnavailableMessage"
-        @mouseleave="resetJoinUnavailableMessage"
     >
         +
     </button>
@@ -170,24 +168,13 @@ const continueConversation = (event) => {
 const joinOpportunity = ref(true); // Only available on the first round
 
 const humanPlayerJumpIn = () => {
-    // Only allow a join if we are still in the join window.
     if (!joinOpportunity.value) {
-        // Silently ignore if the join opportunity is over.
+        // Simply ignore if join opportunity is over.
         return;
     }
-    // Resolve any waiting state if necessary.
-    if (!terminalListenersEnabled.value) {
-        terminalListenersEnabled.value = true;
-        if (currentResolver.value) {
-            currentResolver.value();
-            currentResolver.value = null;
-        }
-        waitingForUser.value = false;
-        return;
-    }
-    // Process valid join request.
+    // Process the join request.
     humanJoined.value = true;
-    joinOpportunity.value = false; // disable further join attempts.
+    joinOpportunity.value = false; // Disable further join attempts.
     terminalListenersEnabled.value = false;
     waitingForHuman.value = true;
 };
@@ -248,19 +235,16 @@ const simulateConversation = async () => {
             waitingForAI.value = false;
             player1Message.value = response || "No response";
             addMessage("Gemini (Player 1)", " " + player1Message.value);
-
-            // Offer join opportunity if still active.
+            
+            // During the first round, offer a one-time join prompt.
             if (joinOpportunity.value) {
-                addMessage(
-                    "System",
-                    "Press + to join the game as Player 2! (This is your only chance)"
-                );
+                addMessage("System", "Press + to join the game as Player 2! (This is your only chance)");
                 waitingForUser.value = true;
-                await waitForUserInput();
+                await waitForUserInput(); // Wait indefinitely for the user to press continue.
                 waitingForUser.value = false;
-                joinOpportunity.value = false;
+                joinOpportunity.value = false; // Close the join window.
             }
-
+            
             currentTurn.value = humanJoined.value ? "player2" : "dm";
         } else if (currentTurn.value === "player2") {
             waitingForHuman.value = true;
@@ -338,21 +322,6 @@ const getChatGPTResponse = async (prompt) => {
         console.error("Error fetching ChatGPT response:", error);
         return "Error fetching response";
     }
-};
-
-// New flag to avoid spamming join unavailable message
-const joinUnavailableMessageDisplayed = ref(false);
-
-const showJoinUnavailableMessage = () => {
-    if (!joinOpportunity.value && !joinUnavailableMessageDisplayed.value) {
-        addMessage("System", "Join game is no longer available");
-        joinUnavailableMessageDisplayed.value = true;
-    }
-};
-
-const resetJoinUnavailableMessage = () => {
-    // Clear the flag once the mouse leaves the button
-    joinUnavailableMessageDisplayed.value = false;
 };
 
 onMounted(() => {
