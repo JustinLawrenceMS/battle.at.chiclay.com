@@ -173,6 +173,12 @@ const humanPlayerJumpIn = () => {
 };
 
 const submitHumanInput = async () => {
+    console.log("submitHumanInput triggered", { 
+        currentTurn: currentTurn.value, 
+        waitingForHuman: waitingForHuman.value, 
+        input: humanInput.value 
+    });
+
     if (currentTurn.value !== "player2" || !waitingForHuman.value) {
         return;
     }
@@ -189,13 +195,6 @@ const submitHumanInput = async () => {
 
     humanInput.value = "";
     currentTurn.value = "dm"; // Hand over to DM
-
-    console.log("submitHumanInput triggered", { 
-        currentTurn: currentTurn.value, 
-        waitingForHuman: waitingForHuman.value, 
-        input: humanInput.value 
-    });
-
 };
 
 // Fixed labels.
