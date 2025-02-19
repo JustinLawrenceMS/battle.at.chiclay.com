@@ -180,11 +180,10 @@ const humanPlayerJumpIn = () => {
 };
 
 const submitHumanInput = async () => {
-    // Validate that it is indeed player 2's turn
-    if (currentTurn.value !== "player2" || !waitingForHuman.value) {
-        addMessage("System", " It's not your turn yet. Wait for player 1.");
+    if (!(currentTurn.value === "player2" && waitingForHuman.value)) {
         return;
     }
+    
     waitingForHuman.value = false;
 
     if (requestTimedOut.value < 2) {
