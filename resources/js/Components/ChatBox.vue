@@ -16,13 +16,15 @@
             <input
                 type="text"
                 v-model="humanInput"
+                @keydown.enter.prevent="submitHumanInput"
                 @keydown.space.stop
-                @keyup.enter="submitHumanInput"
+                @click.stop
                 autofocus
                 :placeholder="
                     isMobile ? 'Tap to enter message…' : 'Enter your message'
                 "
             />
+
         </div>
         <div v-if="waitingForAI" class="loader">
             <pre>{{ currentLoaderFrame }}</pre>
@@ -180,23 +182,29 @@ const humanPlayerJumpIn = () => {
 };
 
 const submitHumanInput = async () => {
-    if (!(currentTurn.value === "player2" && waitingForHuman.value)) {
+    if (currentTurn.value !== "player2" || !waitingForHuman.value) {
         return;
     }
-    
+
+    const inputValue = humanInput.value.trim();
+    if (!inputValue) return; // Ignore empty input
+
     waitingForHuman.value = false;
+    addMessage("Human (Player 2)", inputValue);
 
-    if (requestTimedOut.value < 2) {
-        humanInput.value = "Player 2 timed out";
-        requestTimedOut.value++;
-        return;
-    }
-
-    addMessage("Human (Player 2)", " " + humanInput.value);
-    player2Message.value = "this is Player 2. " + humanInput.value;
+    player2Message.value = `this is Player 2. ${inputValue}`;
     payload.value += player2Message.value;
-    payload.value = payload.value.slice(-15999); // truncate to 16kb
+    payload.value = payload.value.slice(-15999); // Ensure it doesn’t exceed limits
+
     humanInput.value = "";
+    currentTurn.value = "dm"; // Hand over to DM
+
+    console.log("submitHumanInput triggered", { 
+        currentTurn: currentTurn.value, 
+        waitingForHuman: waitingForHuman.value, 
+        input: humanInput.value 
+    });
+
 };
 
 // Fixed labels.
