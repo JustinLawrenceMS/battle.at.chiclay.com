@@ -225,10 +225,8 @@ const simulateConversation = async () => {
 
                 if (humanJoined.value) {
                     // If a player joined, skip the next prompt.
-                    joinOpportunity.value = false;
                     currentTurn.value = "player2";
-                    return;
-                }
+                 }
 
                 waitingForUser.value = false;
                 joinOpportunity.value = false; // Close the join window.
