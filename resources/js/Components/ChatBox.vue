@@ -160,6 +160,7 @@ const humanPlayerJumpIn = () => {
     }
     humanJoined.value = true;
     joinOpportunity.value = false; // Disable further join attempts.
+    waitingForHuman.value = true;
 };
 
 const submitHumanInput = async () => {
@@ -218,7 +219,7 @@ const simulateConversation = async () => {
             waitingForUser.value = false; 
             joinOpportunity.value = false;
             currentTurn.value = humanJoined.value ? "player2" : "dm";
-        } else if (currentTurn.value === "player2") {
+        } else if (!joinOpportunity.value && currentTurn.value === "player2") {
             // Set flag to show input and then wait until submitHumanInput clears it.
             waitingForHuman.value = true;
             waitingForUser.value = true;
