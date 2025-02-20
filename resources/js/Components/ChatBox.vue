@@ -224,11 +224,15 @@ const simulateConversation = async () => {
         } else if (currentTurn.value === "player2") {
             // Set flag to show input and then wait until submitHumanInput clears it.
             waitingForHuman.value = true;
+            waitingForUser.value = true;
             // Instead of awaiting a helper, poll until the human input has been submitted.
-            while (currentTurn.value === "player2") {
-                await waitForUserInput();
-                waitingForHuman.value = false;
-                currentTurn.value = "dm";
+            if (!joinOpportunity.value) {
+                while (currentTurn.value === "player2") {
+                    await waitForUserInput();
+                    waitingForHuman.value = false;
+                    waitingForUser.value = false;
+                    currentTurn.value = "dm";
+                }
             }
             // When submitHumanInput runs, it should set waitingForHuman to false and currentTurn to "dm".
         } else if (currentTurn.value === "dm") {
