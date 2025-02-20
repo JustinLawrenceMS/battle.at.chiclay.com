@@ -24,7 +24,6 @@
                     isMobile ? 'Tap to enter message…' : 'Enter your message'
                 "
             />
-
         </div>
         <div v-if="waitingForAI" class="loader">
             <pre>{{ currentLoaderFrame }}</pre>
@@ -38,12 +37,7 @@
     <!-- Button to scroll to the latest message -->
     <button class="scroll-to-top" @click.stop="scrollToLatestMessage">↑</button>
     <!-- Button for a human player to jump in -->
-    <button
-        class="human-player"
-        @click.stop="humanPlayerJumpIn"
-    >
-        +
-    </button>
+    <button class="human-player" @click.stop="humanPlayerJumpIn">+</button>
 </template>
 
 <script setup>
@@ -173,10 +167,10 @@ const humanPlayerJumpIn = () => {
 };
 
 const submitHumanInput = async () => {
-    console.log("submitHumanInput triggered", { 
-        currentTurn: currentTurn.value, 
-        waitingForHuman: waitingForHuman.value, 
-        input: humanInput.value 
+    console.log("submitHumanInput triggered", {
+        currentTurn: currentTurn.value,
+        waitingForHuman: waitingForHuman.value,
+        input: humanInput.value,
     });
 
     if (!waitingForHuman.value) {
@@ -220,23 +214,33 @@ const simulateConversation = async () => {
             waitingForAI.value = false;
             player1Message.value = response || "No response";
             addMessage("Gemini (Player 1)", " " + player1Message.value);
-            
-            // During the first round, offer a one-time join prompt.
+
             if (joinOpportunity.value) {
-                addMessage("System", "Press + to join the game as Player 2! (This is your only chance)");
+                addMessage(
+                    "System",
+                    "Press + to join the game as Player 2! (This is your only chance)"
+                );
                 waitingForUser.value = true;
-                await waitForUserInput(); // Wait indefinitely for the user to press continue.
+                await waitForUserInput(); // Wait for input before proceeding.
+
+                if (humanJoined.value) {
+                    // If a player joined, skip the next prompt.
+                    joinOpportunity.value = false;
+                    currentTurn.value = "player2";
+                    return;
+                }
+
                 waitingForUser.value = false;
                 joinOpportunity.value = false; // Close the join window.
             }
-            
+
             currentTurn.value = humanJoined.value ? "player2" : "dm";
         } else if (currentTurn.value === "player2") {
             // Set flag to show input and then wait until submitHumanInput clears it.
             waitingForHuman.value = true;
             // Instead of awaiting a helper, poll until the human input has been submitted.
             while (currentTurn.value === "player2") {
-                await new Promise(resolve => setTimeout(resolve, 200));
+                await new Promise((resolve) => setTimeout(resolve, 200));
             }
             // When submitHumanInput runs, it should set waitingForHuman to false and currentTurn to "dm".
         } else if (currentTurn.value === "dm") {
