@@ -267,7 +267,7 @@ const simulateConversation = async () => {
 function waitForPlusKey() {
     return new Promise((resolve) => {
         const handleKeyPress = (event) => {
-            if (event.key === "+" || (event.key === "=" && event.shiftKey)) {
+            if (event.type === "keydown" || event.type === "click") {
                 console.log("Plus key pressed");
                 humanJoined.value = true;
                 window.removeEventListener("keydown", handleKeyPress);
