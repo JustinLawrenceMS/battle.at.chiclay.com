@@ -239,6 +239,7 @@ const simulateConversation = async () => {
             // Instead of awaiting a helper, poll until the human input has been submitted.
             while (currentTurn.value === "player2") {
                 await new Promise((resolve) => setTimeout(resolve, 200));
+                currentTurn.value = "dm";
             }
             // When submitHumanInput runs, it should set waitingForHuman to false and currentTurn to "dm".
         } else if (currentTurn.value === "dm") {
