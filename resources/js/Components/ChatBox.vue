@@ -267,9 +267,10 @@ const simulateConversation = async () => {
 function waitForPlusKey() {
     return new Promise((resolve) => {
         const handleKeyPress = (event) => {
-            if (event.type === "click") {
+            if (event.type === "click" || event.key === "return") {
                 console.log("Plus key pressed");
                 humanJoined.value = true;
+                currentTurn.value = "player2";
                 window.removeEventListener("keydown", handleKeyPress);
                 resolve(true);
             }
