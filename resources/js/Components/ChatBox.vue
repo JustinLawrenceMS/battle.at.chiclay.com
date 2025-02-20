@@ -219,8 +219,10 @@ const simulateConversation = async () => {
                     "System",
                     "Press + to join the game as Player 2! (This is your only chance)"
                 );
+
+                await waitForPlusKey();
                 waitingForUser.value = true;
-                await waitForUserInput(); // Wait for input before proceeding.
+
 
                 if (humanJoined.value) {
                     // If a player joined, skip the next prompt.
@@ -261,6 +263,20 @@ const simulateConversation = async () => {
         }
     }
 };
+
+function waitForPlusKey() {
+    return new Promise((resolve) => {
+        const handleKeyPress = (event) => {
+            if (event.key === "+") {
+                humanJoined.value = true;
+                window.removeEventListener("keydown", handleKeyPress);
+                resolve(true);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyPress);
+    });
+}
 
 const getGeminiResponse = async (prompt) => {
     try {
