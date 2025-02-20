@@ -174,7 +174,7 @@ const submitHumanInput = async () => {
     if (!inputValue) return; // Ignore empty input
 
     waitingForHuman.value = false;
-    addMessage("Human (Player 2): ", inputValue);
+    addMessage("Human (Player 2)", " " + inputValue);
 
     player2Message.value = `this is Player 2. ${inputValue}`;
     payload.value += player2Message.value;
@@ -226,9 +226,9 @@ const simulateConversation = async () => {
             waitingForHuman.value = true;
             // Instead of awaiting a helper, poll until the human input has been submitted.
             while (currentTurn.value === "player2") {
-                await new Promise((resolve) => {return player2Message.value = resolve}); 
-                currentTurn.value = "dm";
+                await waitForUserInput();
                 waitingForHuman.value = false;
+                currentTurn.value = "dm";
             }
             // When submitHumanInput runs, it should set waitingForHuman to false and currentTurn to "dm".
         } else if (currentTurn.value === "dm") {
@@ -243,10 +243,10 @@ const simulateConversation = async () => {
             stopLoaderAnimation();
             waitingForAI.value = false;
             addMessage("ChatGPT (DM)", " " + (dmResponse || "No response"));
-            currentTurn.value = "player1";
             waitingForUser.value = true;
             await waitForUserInput();
             waitingForUser.value = false;
+            currentTurn.value = "player1";
         }
     }
 };
