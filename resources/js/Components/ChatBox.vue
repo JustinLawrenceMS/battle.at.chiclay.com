@@ -189,11 +189,14 @@ const player2Prefix = "This is player 2:";
 // Store individual prompts.
 const player1Message = ref("");
 const player2Message = ref("");
+const roundIndex = ref(0);
 
 // In your simulateConversation function, update the player2 branch:
 const simulateConversation = async () => {
+
     currentTurn.value = "player1";
     while (true) {
+        roundIndex.value++;
         if (currentTurn.value === "player1") {
             // Player 1’s turn: fetch AI response.
             waitingForAI.value = true;
@@ -219,7 +222,7 @@ const simulateConversation = async () => {
             waitingForUser.value = false; 
             joinOpportunity.value = false;
             currentTurn.value = humanJoined.value ? "player2" : "dm";
-        } else if (!joinOpportunity.value && currentTurn.value === "player2") {
+        } else if (roundIndex.value > 1 && currentTurn.value === "player2") {
             // Set flag to show input and then wait until submitHumanInput clears it.
             waitingForHuman.value = true;
             waitingForUser.value = true;
