@@ -16,7 +16,7 @@
             <input
                 type="text"
                 v-model="humanInput"
-                @keydown.enter.prevent="submitHumanInput"
+                @keydown.enter.prevent="submitUserInput"
                 @keydown.space.stop
                 @click.stop
                 autofocus
@@ -31,8 +31,7 @@
         </div>
         <div v-if="waitingForUser" class="prompt">
             <!-- Always use the same continue prompt regardless of player join status -->
-            <span v-if="isMobile">[Tap to continue...]</span>
-            <span v-else>[Press SPACE to continue...]</span>
+            <span>[Tap or click to continue...]</span>
         </div>
     </div>
     <!-- Button to scroll to the latest message -->
@@ -63,7 +62,6 @@ const currentResolver = ref(null);
 const requestTimedOut = ref(3);
 // Turn order variables.
 const currentTurn = ref("player1"); // can be "player1", "player2", or "dm"
-const humanRequested = ref(false);
 const humanJoined = ref(false);
 
 const loaderFrames = [
@@ -168,33 +166,9 @@ const humanPlayerJumpIn = () => {
     }
     // Process the join request.
     humanJoined.value = true;
+    currentTurn.value = "player2";
     joinOpportunity.value = false; // Disable further join attempts.
     waitingForHuman.value = true;
-};
-
-const submitHumanInput = async () => {
-    console.log("submitHumanInput triggered", { 
-        currentTurn: currentTurn.value, 
-        waitingForHuman: waitingForHuman.value, 
-        input: humanInput.value 
-    });
-
-    if (!waitingForHuman.value) {
-        return;
-    }
-
-    const inputValue = humanInput.value.trim();
-    if (!inputValue) return; // Ignore empty input
-
-    waitingForHuman.value = false;
-    addMessage("Human (Player 2)", inputValue);
-
-    player2Message.value = `this is Player 2. ${inputValue}`;
-    payload.value += player2Message.value;
-    payload.value = payload.value.slice(-15999); // Ensure it doesn’t exceed limits
-
-    humanInput.value = "";
-    currentTurn.value = "dm"; // Hand over to DM
 };
 
 // Fixed labels.
@@ -210,6 +184,7 @@ const simulateConversation = async () => {
     currentTurn.value = "player1";
     while (true) {
         if (currentTurn.value === "player1") {
+            joinOpportunity.value = humanJoined.value;
             // Player 1’s turn: fetch AI response.
             waitingForAI.value = true;
             startLoaderAnimation();
@@ -232,13 +207,13 @@ const simulateConversation = async () => {
             
             currentTurn.value = humanJoined.value ? "player2" : "dm";
         } else if (currentTurn.value === "player2") {
-            // Set flag to show input and then wait until submitHumanInput clears it.
-            waitingForHuman.value = true;
+            waitingForUser.value = true;
             // Instead of awaiting a helper, poll until the human input has been submitted.
             while (currentTurn.value === "player2") {
-                await new Promise(resolve => setTimeout(resolve, 200));
+                await waitForUserInput();
+                currentTurn.value = "dm";
+                waitingForUser.value = false;
             }
-            // When submitHumanInput runs, it should set waitingForHuman to false and currentTurn to "dm".
         } else if (currentTurn.value === "dm") {
             let dmPrompt = humanJoined.value
                 ? `${player1Prefix} ${player1Message.value}\n${player2Prefix} ${player2Message.value}`
