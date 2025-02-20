@@ -160,7 +160,7 @@ const humanPlayerJumpIn = () => {
     }
     // Process the join request.
     humanJoined.value = true;
-    currentTurn.value = "player2";
+    //currentTurn.value = "player2";
     joinOpportunity.value = false; // Disable further join attempts.
     waitingForHuman.value = true;
 };
@@ -213,10 +213,12 @@ const simulateConversation = async () => {
                     "System",
                     "Press + to join the game as Player 2! (This is your only chance)"
                 );
-                waitingForUser.value = true;
-                await waitForUserInput();
-                waitingForUser.value = false;
-            } 
+
+            }                
+            
+            waitingForUser.value = true;
+            await waitForUserInput();
+            waitingForUser.value = false; 
             joinOpportunity.value = false;
             currentTurn.value = humanJoined.value ? "player2" : "dm";
         } else if (currentTurn.value === "player2") {
