@@ -223,13 +223,17 @@ const simulateConversation = async () => {
                 waitingForUser.value = true;
                 await waitForPlusKey();
 
+                if (humanJoined.value) {
+                    currentTurn.value = "player2";
+                }
+
                 console.log("humanJoined", humanJoined.value);
-                
+        
+                console.log("currentTurn", currentTurn.value);
+
                 waitingForUser.value = false;
                 joinOpportunity.value = false;
             }
-
-            currentTurn.value = humanJoined.value ? "player2" : "dm";
         } else if (currentTurn.value === "player2") {
             // Set flag to show input and then wait until submitHumanInput clears it.
             waitingForHuman.value = true;
