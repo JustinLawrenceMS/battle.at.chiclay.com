@@ -240,6 +240,7 @@ const simulateConversation = async () => {
             while (currentTurn.value === "player2") {
                 await new Promise((resolve) => setTimeout(resolve, 200));
                 currentTurn.value = "dm";
+                waitingForHuman.value = false;
             }
             // When submitHumanInput runs, it should set waitingForHuman to false and currentTurn to "dm".
         } else if (currentTurn.value === "dm") {
