@@ -224,7 +224,7 @@ const simulateConversation = async () => {
             waitingForHuman.value = true;
             // Instead of awaiting a helper, poll until the human input has been submitted.
             while (currentTurn.value === "player2") {
-                await new Promise((resolve) => setTimeout(resolve, 200));
+                await waitForUserInput(); 
                 currentTurn.value = "dm";
                 waitingForHuman.value = false;
             }
@@ -260,8 +260,8 @@ const getGeminiResponse = async (prompt) => {
 
         const response = await axios.post(
             "/api/v1/gemini",
-            { gemini_prompt: { prompt } }, // This is the request body
-            { timeout: 15000 } // This is the config object
+            { gemini_prompt: { prompt } },
+            { timeout: 15000 } 
         );
         stopLoaderAnimation();
         waitingForAI.value = false;
@@ -304,7 +304,6 @@ const getChatGPTResponse = async (prompt) => {
 };
 
 onMounted(() => {
-    isMobile.value = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     terminal.value.focus();
     simulateConversation();
 });
