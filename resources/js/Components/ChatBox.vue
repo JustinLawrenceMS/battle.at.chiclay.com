@@ -219,18 +219,14 @@ const simulateConversation = async () => {
                     "System",
                     "Press + to join the game as Player 2! (This is your only chance)"
                 );
-
-                await waitForPlusKey();
+                
                 waitingForUser.value = true;
+                await waitForPlusKey();
 
-
-                if (humanJoined.value) {
-                    // If a player joined, skip the next prompt.
-                    currentTurn.value = "player2";
-                 }
-
+                console.log("humanJoined", humanJoined.value);
+                
                 waitingForUser.value = false;
-                joinOpportunity.value = false; // Close the join window.
+                joinOpportunity.value = false;
             }
 
             currentTurn.value = humanJoined.value ? "player2" : "dm";
