@@ -30,8 +30,7 @@
         </div>
         <div v-if="waitingForUser" class="prompt">
             <!-- Always use the same continue prompt regardless of player join status -->
-            <span v-if="isMobile">[Tap to continue...]</span>
-            <span v-else>[Press SPACE to continue...]</span>
+            <span>[tap or click to continue...]</span>
         </div>
     </div>
     <!-- Button to scroll to the latest message -->
