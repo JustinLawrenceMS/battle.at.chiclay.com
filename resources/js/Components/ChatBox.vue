@@ -158,11 +158,8 @@ const humanPlayerJumpIn = () => {
         // The join window is closed—simply ignore the click.
         return;
     }
-    // Process the join request.
     humanJoined.value = true;
-    //currentTurn.value = "player2";
     joinOpportunity.value = false; // Disable further join attempts.
-    waitingForHuman.value = true;
 };
 
 const submitHumanInput = async () => {
@@ -226,13 +223,11 @@ const simulateConversation = async () => {
             waitingForHuman.value = true;
             waitingForUser.value = true;
             // Instead of awaiting a helper, poll until the human input has been submitted.
-            if (!joinOpportunity.value) {
-                while (currentTurn.value === "player2") {
-                    await waitForUserInput();
-                    waitingForHuman.value = false;
-                    waitingForUser.value = false;
-                    currentTurn.value = "dm";
-                }
+            while (currentTurn.value === "player2") {
+                await waitForUserInput();
+                waitingForHuman.value = false;
+                waitingForUser.value = false;
+                currentTurn.value = "dm";
             }
             // When submitHumanInput runs, it should set waitingForHuman to false and currentTurn to "dm".
         } else if (currentTurn.value === "dm") {
