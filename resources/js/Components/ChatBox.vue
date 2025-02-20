@@ -56,7 +56,6 @@ const currentResolver = ref(null);
 const requestTimedOut = ref(3);
 // Turn order variables.
 const currentTurn = ref("player1"); // can be "player1", "player2", or "dm"
-const humanRequested = ref(false);
 const humanJoined = ref(false);
 
 const loaderFrames = [
@@ -215,6 +214,8 @@ const simulateConversation = async () => {
                     "Press + to join the game as Player 2! (This is your only chance)"
                 );
                 waitingForUser.value = true;
+                await waitForUserInput();
+                waitingForUser.value = false;
                 
                 joinOpportunity.value = false;
             }
