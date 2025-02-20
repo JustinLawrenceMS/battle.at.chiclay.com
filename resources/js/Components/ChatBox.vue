@@ -161,17 +161,12 @@ const humanPlayerJumpIn = () => {
     }
     // Process the join request.
     humanJoined.value = true;
+    currentTurn.value = "player2";
     joinOpportunity.value = false; // Disable further join attempts.
     waitingForHuman.value = true;
 };
 
 const submitHumanInput = async () => {
-    console.log("submitHumanInput triggered", {
-        currentTurn: currentTurn.value,
-        waitingForHuman: waitingForHuman.value,
-        input: humanInput.value,
-    });
-
     if (!waitingForHuman.value) {
         return;
     }
@@ -180,7 +175,7 @@ const submitHumanInput = async () => {
     if (!inputValue) return; // Ignore empty input
 
     waitingForHuman.value = false;
-    addMessage("Human (Player 2)", inputValue);
+    addMessage("Human (Player 2): ", inputValue);
 
     player2Message.value = `this is Player 2. ${inputValue}`;
     payload.value += player2Message.value;
@@ -219,19 +214,8 @@ const simulateConversation = async () => {
                     "System",
                     "Press + to join the game as Player 2! (This is your only chance)"
                 );
-                
                 waitingForUser.value = true;
-                await waitForPlusKey();
-
-                if (humanJoined.value) {
-                    currentTurn.value = "player2";
-                }
-
-                console.log("humanJoined", humanJoined.value);
-        
-                console.log("currentTurn", currentTurn.value);
-
-                waitingForUser.value = false;
+                
                 joinOpportunity.value = false;
             }
         } else if (currentTurn.value === "player2") {
@@ -263,23 +247,6 @@ const simulateConversation = async () => {
         }
     }
 };
-
-function waitForPlusKey() {
-    return new Promise((resolve) => {
-        const handleKeyPress = (event) => {
-            if (event.type === "click" || event.key === "return") {
-                console.log("Plus key pressed");
-                humanJoined.value = true;
-                currentTurn.value = "player2";
-                window.removeEventListener("keydown", handleKeyPress);
-                resolve(true);
-            }
-        };
-
-        console.log("Waiting for + key press");
-        window.addEventListener("keydown", handleKeyPress);
-    });
-}
 
 const getGeminiResponse = async (prompt) => {
     try {
