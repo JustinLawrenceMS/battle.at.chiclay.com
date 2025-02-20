@@ -268,12 +268,14 @@ function waitForPlusKey() {
     return new Promise((resolve) => {
         const handleKeyPress = (event) => {
             if (event.key === "+") {
+                console.log("Plus key pressed");
                 humanJoined.value = true;
                 window.removeEventListener("keydown", handleKeyPress);
                 resolve(true);
             }
         };
 
+        console.log("Waiting for + key press");
         window.addEventListener("keydown", handleKeyPress);
     });
 }
